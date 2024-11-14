@@ -1,0 +1,25 @@
+apiVersion: v1
+baseDomain: "{{ base_domain}}"
+metadata:
+  name: "{{ cluster_name }}"
+compute:
+- name: worker
+  replicas: 0
+controlPlane:
+  name: master
+  replicas: 1
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+fips: false
+bootstrapInPlace:  # Hinzugefügter Abschnitt für Bootstrap-in-Place
+  installationDisk: /dev/sda  # Ersetzen Sie dies durch den Namen des Ziel-Datenträgers
+pullSecret: '{{ lookup('file', path_to_pull_secret) }}'
+sshKey: "{{ ssh_public_key }}"
+

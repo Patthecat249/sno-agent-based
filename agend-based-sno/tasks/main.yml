@@ -1,0 +1,233 @@
+# tasks file for agend-based-sno
+---
+- name: Install required packages
+  ansible.builtin.yum:
+    name:
+      - tar
+      - wget
+      - jq
+      - podman
+      - python3
+    state: present
+
+- name: Create base directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0644'
+  loop:
+    - "{{ base_dir }}"
+    - "{{ base_dir }}/ssh-keys"
+    - "{{ base_dir }}/sno-clusters"
+    - "{{ base_dir }}/downloads"
+    - "{{ base_dir }}/certs"
+    - "{{ ssh_key_dir }}"
+    - "{{ cluster_dir }}"
+
+- name: Create SSH directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ ssh_key_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Generate SSH key if not exists
+  ansible.builtin.command:
+    cmd: "ssh-keygen -f {{ ssh_key_dir }}/id_rsa_{{ cluster_name }} -N ''"
+  args:
+    creates: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
+
+
+- name: Download OpenShift installer
+  ansible.builtin.get_url:
+    url: "{{ openshift_installer_url }}"
+    dest: "{{ base_dir }}/downloads/openshift-install.tar.gz"
+    mode: '0644'
+
+- name: Check if OpenShift installer is already extracted
+  ansible.builtin.stat:
+    path: "{{ base_dir }}/downloads/openshift-install"
+  register: installer_extracted
+
+- name: Extract OpenShift installer
+  ansible.builtin.unarchive:
+    src: "{{ base_dir }}/downloads/openshift-install.tar.gz"
+    dest: "{{ base_dir }}/downloads/"
+    remote_src: yes
+  when: not installer_extracted.stat.exists
+
+
+- name: Download OpenShift client (oc CLI)
+  ansible.builtin.get_url:
+    url: "{{ openshift_client_url }}"
+    dest: "{{ base_dir }}/downloads/openshift-client.tar.gz"
+    mode: '0644'
+
+- name: Check if OpenShift client is already extracted
+  ansible.builtin.stat:
+    path: "{{ base_dir }}/downloads/oc"
+  register: client_extracted
+
+- name: Extract OpenShift client
+  ansible.builtin.unarchive:
+    src: "{{ base_dir }}/downloads/openshift-client.tar.gz"
+    dest: "{{ base_dir }}/downloads/"
+    remote_src: yes
+  when: not client_extracted.stat.exists
+
+
+- name: Add OpenShift binaries to PATH
+  ansible.builtin.lineinfile:
+    path: /etc/profile.d/openshift_path.sh
+    line: 'export PATH=$PATH:{{ base_dir }}/downloads:{{ base_dir }}/downloads'
+    create: yes
+    mode: '0644'
+
+- name: Source OpenShift path script
+  ansible.builtin.shell: source /etc/profile.d/openshift_path.sh
+  args:
+    executable: /bin/bash
+
+- name: Check if SSH public key exists on remote server
+  ansible.builtin.stat:
+    path: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
+  register: ssh_key_stat
+
+- name: Fail if SSH public key does not exist
+  ansible.builtin.fail:
+    msg: "The SSH public key {{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub was not found on the remote server."
+  when: not ssh_key_stat.stat.exists
+
+- name: Read SSH public key from remote server
+  ansible.builtin.slurp:
+    src: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
+  register: ssh_key_content
+  when: ssh_key_stat.stat.exists
+
+- name: Decode SSH public key content
+  ansible.builtin.set_fact:
+    ssh_public_key: "{{ ssh_key_content.content | b64decode }}"
+  when: ssh_key_stat.stat.exists
+
+# Template install-config.yaml
+- name: Create install-config.yaml from template in cluster directory
+  ansible.builtin.template:
+    src: install-config.yaml.j2
+    dest: "{{ cluster_dir }}/install-config.yaml"
+    mode: '0644'
+
+# Backup -install-config.yaml
+- name: Copy install-config.yaml to shared directory with cluster name
+  ansible.builtin.template:
+    src: "install-config.yaml.j2"
+    dest: "{{ base_dir }}/sno-clusters/install-config-{{ cluster_name }}.yaml"
+    mode: '0644'
+
+
+# Agent-Based.yaml
+- name: Create agent-config.yaml for SNO cluster
+  ansible.builtin.template:
+    src: templates/agent-config.yaml.j2
+    dest: "{{ base_dir }}/sno-clusters/{{ cluster_name }}/agent-config.yaml"
+    mode: '0644'
+  vars:
+    cluster_name: "sno1"               # Beispiel Clustername, kann variabel gesetzt werden
+
+- name: Retrieve ISO URL for OpenShift installation
+  ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install coreos print-stream-json | grep location | grep {{ ARCH }} | grep iso | cut -d'\"' -f4"
+  register: iso_output
+
+- name: Set ISO URL fact
+  ansible.builtin.set_fact:
+    iso_url: "{{ iso_output.stdout }}"
+  when: iso_output.stdout is defined and iso_output.stdout != ""
+
+- name: Download OpenShift ISO
+  ansible.builtin.get_url:
+    url: "{{ iso_url }}"
+    dest: "{{ base_dir }}/downloads/rhcos-live.iso"
+    mode: '0644'
+  when: iso_url is defined
+
+- name: Create single-node-ignition-config
+  ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install --dir={{ base_dir }}/sno-clusters/{{ cluster_name }} create single-node-ignition-config"
+
+# Embed the ignition file
+- name: Embed Ignition file into RHCOS ISO using coreos-installer
+  ansible.builtin.command: >
+    podman run --privileged --pull always --rm
+    -v /dev:/dev
+    -v /run/udev:/run/udev
+    -v {{ base_dir }}:/data
+    -w /data
+    quay.io/coreos/coreos-installer:release
+    iso ignition embed -fi sno-clusters/{{ cluster_name}}/{{ ignition_file }} downloads/{{ iso_file }} -o downloads/{{ cluster_name }}.iso
+  args:
+    chdir: "{{ cluster_dir }}"
+
+# Download -Zertifate vom vCenter
+- name: "VCenter-Zertifikate herunterladen"
+  ansible.builtin.get_url:
+    url: "https://{{ vcenter_hostname }}/certs/download.zip"
+    dest: "{{ dir_downloads }}download.zip"
+    mode: '0600'
+    validate_certs: false
+  register: download_result
+
+# Zertifikate entpacken
+- name: Zertifikate entpacken
+  ansible.builtin.unarchive:
+    src: "{{ dir_downloads }}download.zip"
+    dest: "{{ dir_certs }}"
+    remote_src: true
+  when: download_result is succeeded
+
+# Copy file to truststore root-ca
+- name: Kopiere alle Dateien aus dem Zertifikatsverzeichnis
+  ansible.builtin.copy:
+    src: "{{ dir_entpackt }}"
+    dest: "/etc/pki/ca-trust/source/anchors/"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: true
+
+# Aktualisiere den truststore
+- name: "CA-Trust aktualisieren"
+  ansible.builtin.command: update-ca-trust
+  changed_when: false
+
+
+- name: Upload ISO to VMware datastore via HTTP
+  ansible.builtin.uri:
+    # url: "https://10.0.249.11/folder/downloaded-iso/linux/sno1.iso?dcPath=ha-datacenter&dsName=nfs"
+    url: "https://10.0.249.11/folder/sno/{{ cluster_name }}.iso?dcPath=ha-datacenter&dsName=local-ssd"
+    method: PUT
+    user: "root"
+    password: "Test1234!"
+    src: "{{ dir_downloads }}{{ cluster_name }}.iso"
+    force_basic_auth: yes
+    status_code: 201
+    remote_src: true
+
+# Upload ISO to VMware-Datastore
+# - name: Upload ISO to VMware datastore via SCP
+#   ansible.builtin.copy:
+#     src: "{{ dir_downloads }}{{ cluster_name }}.iso"
+#     dest: "/vmfs/volumes/nfs/downloaded/linux/{{ cluster_name }}.iso"
+#     remote_src: yes
+#   delegate_to: "esx02.home.local"
+
+
+
+
+# - name: Run OpenShift installer to create the Single Node Cluster
+#   ansible.builtin.command:
+#     cmd: {{ base_dir }}/downloads/openshift-install create cluster --dir="{{ cluster_dir }}" --log-level=info
+#   environment:
+#     KUBECONFIG: "{{ cluster_dir }}/auth/kubeconfig"
+#   register: openshift_install_output
+#   failed_when: "'failed' in openshift_install_output.stdout"
+
+# - name: Display installation output
+#   ansible.builtin.debug:
+#     var: openshift_install_output.stdout

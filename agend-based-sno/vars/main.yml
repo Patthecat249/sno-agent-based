@@ -1,0 +1,4 @@
+# vars file for agend-based-sno
+---
+pull_secret: "<YOUR_PULL_SECRET>"
+ssh_public_key: "{{ lookup('file', ssh_key_dir + '/id_rsa_' + clustername + '.pub') }}"

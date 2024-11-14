@@ -1,0 +1,10 @@
+---
+- name: Install Single-Node OpenShift on Rocky Linux
+  hosts: localhost
+  become: yes
+  roles:
+    - role: agend-based-sno
+      vars:
+        cluster_name: "sno1"  # Clustername, kann angepasst werden
+        pull_secret: "<YOUR_PULL_SECRET>"
+        ssh_public_key: "{{ lookup('file', '/opt/sva/ssh-keys/sno1/id_rsa.pub') }}"
