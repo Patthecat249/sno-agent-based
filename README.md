@@ -8,7 +8,7 @@ This Repository contains an ansible-role to install Single-Node-OpenShift with a
 - access to the vcenter to upload the created iso
 
 ## Getting started
-- Install your management System
+- Install your management System "sno-playground" from Template "manual-rocky94"
 - Install ansible
 - Create the agend-based.iso
 
@@ -23,7 +23,7 @@ mkdir -p $MYPATH/git && cd $MYPATH/git && git clone https://github.com/Patthecat
 This file is needed to connect to your vcenter. Remember your password. You will paste it in a file in a few steps.
 ```bash
 # Create a vcenter credentials file
-ansible-vault create $MYPATH/git/openshift-ipi-at-home/oneclick-ocp/vars/vcenter_credentials.yaml
+ansible-vault create $MYPATH/git/sno-agent-based/agend-based-sno/vars/vcenter_credentials.yaml
 vcenter_username: "<vcenter-username>"
 vcenter_password: "<vcenter-password>"
 ```
@@ -32,7 +32,7 @@ vcenter_password: "<vcenter-password>"
 This file contains your Red Hat pull-secret. Please Download from and paste it into the file:
 <https://console.redhat.com/openshift/downloads>
 ```bash
-ansible-vault create $MYPATH/git/openshift-ipi-at-home/oneclick-ocp/vars/pull-secret
+ansible-vault create $MYPATH/git/sno-agent-based/agend-based-sno/vars/pull-secret
 # Paste your Red Hat pull-secret here
 ```
 
@@ -48,10 +48,12 @@ You can choose one of the parameters to prepare your install-config file.
 ### Install with Defaults from vars/main.yaml
 ```bash
 # ansible-playbook 01-playbook.yaml --ask-vault-pass
-ansible-playbook $MYPATH/git/sno-agent-based/install-sno.yaml --vault-password-file $MYPATH/password.txt
+cd $MYPATH/git/sno-agent-based/
+ansible-playbook install-sno.yaml --vault-password-file $MYPATH/password.txt
 
 ```
 ### Customize Clustername and IP-Address
 ```bash
+cd $MYPATH/git/sno-agent-based/
 ansible-playbook install-sno.yaml --vault-password-file $MYPATH/password.txt -e "cluster_name=sno2" -e "ip_address=10.0.249.54"
 ```

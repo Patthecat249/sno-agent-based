@@ -1,10 +1,10 @@
 - name: Install Single-Node OpenShift on Rocky Linux
-  hosts: sno
+  hosts: sno-playground
   gather_facts: false
   become: true
   roles:
     - role: agend-based-sno
       vars:
         cluster_name: "sno1"  # Clustername, kann angepasst werden
-        ssh_public_key: "{{ lookup('file', '/opt/sva/ssh-keys/sno1/id_rsa_sno1.pub') }}"
-        path_to_pull_secret: "/root/git/openshift-ipi-at-home/oneclick-ocp/vars/pull-secret"
+        ssh_public_key: "{{ lookup('file', '/opt/sva/ssh-keys/' + cluster_name + '/id_rsa_sno1.pub') }}"
+        path_to_pull_secret: "/root/git/sno-agent-based/agend-based-sno/vars/pull-secret"
