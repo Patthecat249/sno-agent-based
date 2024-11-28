@@ -16,7 +16,7 @@ This Repository contains an ansible-role to install Single-Node-OpenShift with a
 ```bash
 # git clone
 MYPATH=$PWD
-mkdir -p $MYPATH/git && cd $MYPATH/git && git clone https://github.com/Patthecat249/openshift-ipi-at-home.git
+mkdir -p $MYPATH/git && cd $MYPATH/git && git clone https://github.com/Patthecat249/sno-agent-based.git
 ```
 
 ## Create a ansible-vault with your vcenter-credentials
