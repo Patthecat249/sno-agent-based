@@ -1,3 +1,4 @@
 pull-secret
 vcenter_credentials.yaml
 password.txt
+.vscode/settings.json

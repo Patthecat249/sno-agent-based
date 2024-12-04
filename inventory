@@ -1,2 +1,1 @@
-sno-playground
-
+sno-playground ansible_python_interpreter=/usr/bin/python3

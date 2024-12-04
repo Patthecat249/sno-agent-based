@@ -26,6 +26,8 @@ This file is needed to connect to your vcenter. Remember your password. You will
 ansible-vault create $MYPATH/git/sno-agent-based/agend-based-sno/vars/vcenter_credentials.yaml
 vcenter_username: "<vcenter-username>"
 vcenter_password: "<vcenter-password>"
+esx_host_username: "<esx_host-username>"
+esx_host_password: "<esx_host-password>"
 ```
 
 ## Create Red Hat pull-secret file

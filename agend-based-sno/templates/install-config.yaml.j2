@@ -18,8 +18,8 @@ networking:
 platform:
   none: {}
 fips: false
-bootstrapInPlace:  # Hinzugefügter Abschnitt für Bootstrap-in-Place
-  installationDisk: /dev/sda  # Ersetzen Sie dies durch den Namen des Ziel-Datenträgers
+bootstrapInPlace:
+  installationDisk: /dev/sda
 pullSecret: '{{ lookup('file', path_to_pull_secret) }}'
 sshKey: "{{ ssh_public_key }}"
 

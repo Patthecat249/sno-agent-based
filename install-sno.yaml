@@ -2,6 +2,8 @@
   hosts: sno-playground
   gather_facts: false
   become: true
+  vars_files:
+    - "/root/git/sno-agent-based/agend-based-sno/vars/vcenter_credentials.yaml"
   roles:
     - role: agend-based-sno
       vars:

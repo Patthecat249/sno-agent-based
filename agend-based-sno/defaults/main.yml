@@ -4,18 +4,26 @@ openshift_base_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
 openshift_installer_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-install-linux.tar.gz"
 openshift_client_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-client-linux.tar.gz"
 base_domain: "home.local"
-cluster_name: "sno1"  # Der Single-Node-OpenShift-Clustername
+cluster_name: "sno1"  # Der Default-Single-Node-OpenShift-Clustername
 
 # vcenter
 vcenter_hostname: "vcenter.home.local"
-
+esx_host_hostname: "10.0.249.11"
+datacenter: "dc-home"
+cluster: "cluster-home"
+datastore: "esx-datengrab"
+network_name: "pg-home"
+vm_name: "sno2-ansible"
+vm_folder: "openshift"  # Ordner, in dem die VM erstellt wird
+cpu_count: 8
+memory_mb: 32768
+disk_size_gb: 200
 # ISO
 # ignition_file: "{{ cluster_dir }}/bootstrap-in-place-for-live-iso.ign"
 ignition_file: "bootstrap-in-place-for-live-iso.ign"
 iso_file: "rhcos-live.iso"
 
-
-# Arbeitsverzeichnis
+# Working directories
 base_dir: "/opt/sva"
 cluster_dir: "{{ base_dir }}/sno-clusters/{{ cluster_name }}"
 dir_downloads: "{{ base_dir }}/downloads/"
@@ -23,10 +31,11 @@ dir_certs: "{{ base_dir }}/certs/"
 dir_entpackt: "{{ dir_certs }}certs/lin/"
 ssh_key_dir: "{{ base_dir }}/ssh-keys/{{ cluster_name }}"
 
+# VM-Settings
 ip_address: "10.0.249.149/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 gateway: "10.0.249.1"              # Beispiel Gateway, kann variabel gesetzt werden
 dns_servers:                       # Beispiel DNS-Server, kann variabel gesetzt werden
   - "8.8.8.8"
   - "8.8.4.4"
 
-ARCH: "x86_64"
+arch: "x86_64"
