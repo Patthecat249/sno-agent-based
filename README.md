@@ -1,6 +1,10 @@
 # Agent-based-Single-Node-OpenShift
 This Repository contains an ansible-role to install Single-Node-OpenShift with an Agend-Based-Installation approach.
 
+## Architecture
+![Architekture of SNO-Workaround](images/sno-architecture.drawio.svg)
+
+
 ## Requirements
 - a management VM based on Linux (tested with Rocky Linux 9.4)
 - ansible
