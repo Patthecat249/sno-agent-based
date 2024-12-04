@@ -1,0 +1,24 @@
+variant: fcos
+version: 1.4.0
+storage:
+  files:
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: {{ cluster_name }}
+    - path: /etc/NetworkManager/conf.d/noauto.conf
+      mode: 0644
+      contents:
+        inline: |
+          [main]
+          # Do not do automatic (DHCP/SLAAC) configuration on ethernet devices
+          # with no other matching connections.
+          no-auto-default=*
+passwd:
+  users:
+    - name: patrick
+      groups:
+        - wheel
+        - sudo
+      ssh_authorized_keys:
+        - "{{ ssh_key_content.content | b64decode | trim }}"

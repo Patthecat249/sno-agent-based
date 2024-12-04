@@ -1,0 +1,21 @@
+[connection]
+id=lan
+uuid=cbeedea1-2edb-3396-92ac-874c49903567
+type=ethernet
+autoconnect-priority=-999
+interface-name=ens192
+
+[ethernet]
+
+[ipv4]
+address1={{ ip_address_and_subnet }},{{ gateway }}
+dns={{ dns_server }};
+dns-search={{ base_domain }};
+may-fail=false
+method=manual
+
+[ipv6]
+addr-gen-mode=default
+method=disabled
+
+[proxy]

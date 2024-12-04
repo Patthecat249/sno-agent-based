@@ -1,6 +1,6 @@
 # tasks file for agend-based-sno
 ---
-- name: Install required packages
+- name: "SOFTWARE: Install some necessary tools"
   ansible.builtin.yum:
     name:
       - tar
@@ -8,28 +8,27 @@
       - jq
       - podman
       - python3
-      - python3-pip
     state: present
 
-- name: Stelle sicher, dass pip3 installiert ist
+- name: "SOFTWARE: Install python3-pip"
   ansible.builtin.package:
     name: python3-pip
     state: present
 
-- name: Installiere pyVmomi über pip3
+- name: "SOFTWARE: Install pyvmomi via pip3"
   ansible.builtin.pip:
     name: pyvmomi
     state: present
     executable: pip3
 
-- name: Installiere requests über pip3
+- name: "SOFTWARE: Install requests via pip3"
   ansible.builtin.pip:
     name: requests
     state: present
     executable: pip3
 
 # Everything for a clean installation of the same cluster
-- name: Clean Cluster directories for a fresh installation
+- name: "ENVIRONMENT: Clean Cluster directories for a fresh installation"
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
@@ -37,7 +36,13 @@
     - "{{ ssh_key_dir }}"
     - "{{ cluster_dir }}"
 
-- name: Create base directories
+# Remove ISO-File if exists, because of a new fresh installation
+- name: "ENVIRONMENT: Delete the iso-file /opt/sva/downloads/sno2.iso"
+  ansible.builtin.file:
+    path: "{{ dir_downloads }}{{ cluster_name }}.iso"
+    state: absent
+
+- name: "ENVIRONMENT: Create some base directories"
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -50,136 +55,157 @@
     - "{{ base_dir }}/certs"
     - "{{ ssh_key_dir }}"
     - "{{ cluster_dir }}"
+    - "{{ network_dir }}"
 
-- name: Create SSH directory if it does not exist
+# BEGIN Templating der Netzwerkfiles für ISO-Customize
+# Template lan.nmconnection.j2
+- name: "COREOS-INSTALLER: Template the lan.nmconnection.j2"
+  ansible.builtin.template:
+    src: lan.nmconnection.j2
+    dest: "{{ network_dir }}lan.nmconnection"
+    mode: '0644'
+
+
+
+
+
+
+
+
+
+
+# END
+- name: "ENVIRONMENT: Create SSH directory if it does not exist"
   ansible.builtin.file:
     path: "{{ ssh_key_dir }}"
     state: directory
     mode: '0755'
 
-- name: Generate SSH key if not exists
-  ansible.builtin.command:
-    cmd: "ssh-keygen -f {{ ssh_key_dir }}/id_rsa_{{ cluster_name }} -N ''"
-  args:
-    creates: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
-
-- name: Download OpenShift installer
+- name: "DOWNLOAD: OpenShift installer (openshift-install)"
   ansible.builtin.get_url:
     url: "{{ openshift_installer_url }}"
     dest: "{{ base_dir }}/downloads/openshift-install.tar.gz"
     mode: '0644'
 
-- name: Check if OpenShift installer is already extracted
+- name: "UNARCHIVE: Check if OpenShift installer is already extracted"
   ansible.builtin.stat:
     path: "{{ base_dir }}/downloads/openshift-install"
   register: installer_extracted
 
-- name: Extract OpenShift installer
+- name: "UNARCHIVE: Extract OpenShift installer (openshift-install)"
   ansible.builtin.unarchive:
     src: "{{ base_dir }}/downloads/openshift-install.tar.gz"
     dest: "{{ base_dir }}/downloads/"
     remote_src: true
   when: not installer_extracted.stat.exists
 
-- name: Download OpenShift client (oc CLI)
+- name: "DOWNLOAD: OpenShift client (oc)"
   ansible.builtin.get_url:
     url: "{{ openshift_client_url }}"
     dest: "{{ base_dir }}/downloads/openshift-client.tar.gz"
     mode: '0644'
 
-- name: Check if OpenShift client is already extracted
+- name: "UNARCHIVE: Check if OpenShift client is already extracted"
   ansible.builtin.stat:
     path: "{{ base_dir }}/downloads/oc"
   register: client_extracted
 
-- name: Extract OpenShift client
+- name: "UNARCHIVE: Extract OpenShift client"
   ansible.builtin.unarchive:
     src: "{{ base_dir }}/downloads/openshift-client.tar.gz"
     dest: "{{ base_dir }}/downloads/"
     remote_src: true
   when: not client_extracted.stat.exists
 
-- name: Add OpenShift binaries to PATH
+- name: "ENVIRONMENT: Add OpenShift binaries to PATH"
   ansible.builtin.lineinfile:
     path: /etc/profile.d/openshift_path.sh
     line: 'export PATH=$PATH:{{ base_dir }}/downloads:{{ base_dir }}/downloads'
     create: true
     mode: '0644'
 
-- name: Source OpenShift path script
+- name: "ENVIRONMENT: Source OpenShift path script"
   ansible.builtin.shell: source /etc/profile.d/openshift_path.sh
   args:
     executable: /bin/bash
 
-- name: Check if SSH public key exists on remote server
+- name: "SSH-KEYS: Generate SSH key if not exists"
+  ansible.builtin.command:
+    cmd: "ssh-keygen -f {{ ssh_key_dir }}/id_rsa_{{ cluster_name }} -N ''"
+  args:
+    creates: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
+
+- name: "SSH-KEYS: Check if SSH public key exists on remote server"
   ansible.builtin.stat:
     path: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
   register: ssh_key_stat
 
-- name: Fail if SSH public key does not exist
+- name: "SSH-KEYS: Fail if SSH public key does not exist"
   ansible.builtin.fail:
     msg: "The SSH public key {{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub was not found on the remote server."
   when: not ssh_key_stat.stat.exists
 
-- name: Read SSH public key from remote server
+- name: "SSH-KEYS: Read SSH public key from remote server"
   ansible.builtin.slurp:
     src: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
   register: ssh_key_content
   when: ssh_key_stat.stat.exists
 
-- name: Decode SSH public key content
+- name: "SSH-KEYS: Decode SSH public key content"
   ansible.builtin.set_fact:
     ssh_public_key: "{{ ssh_key_content.content | b64decode | trim }}"
   when: ssh_key_stat.stat.exists
 
 # Template install-config.yaml
-- name: Create install-config.yaml from template in cluster directory
+- name: "OPENSHIFT: Template install-config.yaml in cluster directory"
   ansible.builtin.template:
     src: install-config.yaml.j2
     dest: "{{ cluster_dir }}/install-config.yaml"
     mode: '0644'
 
+- name: "OPENSHIFT: Template butane.yaml in cluster directory"
+  ansible.builtin.template:
+    src: butane.conf.j2
+    dest: "{{ cluster_dir }}/butane.yaml"
+    mode: '0644'
+
 # Backup -install-config.yaml
-- name: Copy install-config.yaml to shared directory with cluster name
+- name: "OPENSHIFT: Make a copy of install-config.yaml to shared directory (install-config-{{ cluster_name }}.yaml)"
   ansible.builtin.template:
     src: "install-config.yaml.j2"
     dest: "{{ base_dir }}/sno-clusters/install-config-{{ cluster_name }}.yaml"
     mode: '0644'
 
-# Agent-Based.yaml
-# - name: Create agent-config.yaml for SNO cluster
-#   ansible.builtin.template:
-#     src: templates/agent-config.yaml.j2
-#     dest: "{{ base_dir }}/sno-clusters/{{ cluster_name }}/agent-config.yaml"
-#     mode: '0644'              # Beispiel Clustername, kann variabel gesetzt werden
+- name: "OPENSHIFT: Make a copy of butane.yaml to shared directory (butane-{{ cluster_name }}.yaml)"
+  ansible.builtin.template:
+    src: "butane.conf.j2"
+    dest: "{{ base_dir }}/sno-clusters/butane-{{ cluster_name }}.yaml"
+    mode: '0644'
 
-- name: "Retrieve ISO URL for OpenShift installation"
+- name: "OPENSHIFT: Retrieve URL for rhcos-live.iso"
   ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install coreos print-stream-json | grep location | grep {{ arch }} | grep iso | cut -d'\"' -f4"
   register: iso_output
 
-- name: Set ISO URL fact
+- name: "OPENSHIFT: Set URL fact for rhcos-live.iso"
   ansible.builtin.set_fact:
     iso_url: "{{ iso_output.stdout }}"
   when: iso_output.stdout is defined and iso_output.stdout != ""
 
-- name: Download OpenShift ISO
+- name: "DOWNLOAD: rhcos-live.iso from Red Hat"
   ansible.builtin.get_url:
     url: "{{ iso_url }}"
     dest: "{{ base_dir }}/downloads/rhcos-live.iso"
     mode: '0644'
   when: iso_url is defined
 
-- name: Create single-node-ignition-config
+# Create the ignition-file 
+- name: "OPENSHIFT-INSTALL: Create single-node-ignition-config"
   ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install --dir={{ base_dir }}/sno-clusters/{{ cluster_name }} create single-node-ignition-config"
 
-# Remove Output-File if exists
-- name: Delete the file /opt/sva/downloads/sno2.iso
-  ansible.builtin.file:
-    path: "{{ dir_downloads }}{{ cluster_name }}.iso"
-    state: absent
+
 
 # Embed the ignition file
-- name: Embed Ignition file into RHCOS ISO using coreos-installer
+- name: "COREOS-INSTALLER: Embed Ignition file into RHCOS ISO using coreos-installer"
   ansible.builtin.command: >
     podman run --privileged --pull always --rm
     -v /dev:/dev
@@ -187,12 +213,36 @@
     -v {{ base_dir }}:/data
     -w /data
     quay.io/coreos/coreos-installer:release
-    iso ignition embed -fi sno-clusters/{{ cluster_name}}/{{ ignition_file }} downloads/{{ iso_file }} -o downloads/{{ cluster_name }}.iso
+    iso ignition embed -fi sno-clusters/{{ cluster_name}}/{{ ignition_file }} downloads/{{ iso_file }} -o downloads/{{ cluster_name }}-temp.iso
   args:
     chdir: "{{ cluster_dir }}"
 
+
+
+# BEGIN: INSERT BUTANE HOSTNAME and NETWORKCONFIGURATION to {{ base_dir }}/sno-clusters/
+- name: "COREOS-INSTALLER: Embed network-config using iso customize with coreos-installer"
+  ansible.builtin.command: >
+    podman run --privileged --rm -v {{ base_dir }}:/data -w /data quay.io/coreos/coreos-installer:release iso customize -f --dest-device /dev/sda --network-keyfile ./sno-clusters/{{ cluster_name }}/network-configs/lan.nmconnection downloads/{{ cluster_name }}-temp.iso -o downloads/{{ cluster_name }}.iso
+  args:
+    chdir: "{{ cluster_dir }}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# END: INSERT BUTANE HOSTNAME and NETWORKCONFIGURATION to {{ base_dir }}/sno-clusters/
+
 # Download -Zertifate vom vCenter
-- name: "VCenter-Zertifikate herunterladen"
+- name: "BASTION: Download vCenter-Root-Certificates to Bastion-Host"
   ansible.builtin.get_url:
     url: "https://{{ vcenter_hostname }}/certs/download.zip"
     dest: "{{ dir_downloads }}download.zip"
@@ -200,8 +250,8 @@
     validate_certs: false
   register: download_result
 
-# Zertifikate entpacken
-- name: Zertifikate entpacken
+# Extract Root-Certificates
+- name: "BASTION: Extract Root-Certificates to Bastion-Host certs-directory"
   ansible.builtin.unarchive:
     src: "{{ dir_downloads }}download.zip"
     dest: "{{ dir_certs }}"
@@ -209,7 +259,7 @@
   when: download_result is succeeded
 
 # Copy root-cafile to truststore on Bastion-Host
-- name: Kopiere alle Dateien aus dem Zertifikatsverzeichnis
+- name: "BASTION: Copy all vcenter-rootca-certificate-files to the bastions truststore"
   ansible.builtin.copy:
     src: "{{ dir_entpackt }}"
     dest: "/etc/pki/ca-trust/source/anchors/"
@@ -218,14 +268,14 @@
     mode: '0644'
     remote_src: true
 
-# Aktualisiere den truststore auf dem Bastion-Host
-- name: "CA-Trust aktualisieren"
+# Refresh the truststore of the Bastion-Host
+- name: "BASTION: Refresh Bastion-Host CA-Truststore"
   ansible.builtin.command: update-ca-trust
   changed_when: false
 
 ### VMWARE
 # Löschen falls vorhanden
-- name: Delete a virtual machine
+- name: "VMWARE: Delete an existing virtual machine, if exists"
   community.vmware.vmware_guest:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -237,7 +287,7 @@
   # delegate_to: localhost
 
 # WICHTIG: Das ISO-File darf nicht mehr in einer VM gemounted sein!!!
-- name: "Remove {{ cluster_name}}.iso on a datastore before uploading"
+- name: "VMWARE: Remove {{ cluster_name}}.iso on a datastore before uploading"
   community.vmware.vsphere_file:
     hostname: '{{ esx_host_hostname }}'
     username: '{{ esx_host_username }}'
@@ -247,7 +297,7 @@
     path: sno/{{ cluster_name }}.iso
     state: absent
 
-- name: Upload ISO to VMware datastore via HTTP
+- name: "VMWARE: Upload customized-sno ISO to VMware datastore via HTTPS"
   ansible.builtin.uri:
     url: "https://{{ esx_host_hostname }}/folder/sno/{{ cluster_name }}.iso?dcPath=ha-datacenter&dsName=local-ssd"
     method: PUT
@@ -259,7 +309,7 @@
     remote_src: true
 
 # Erzeuge ein VM für SNO
-- name: Create a virtual machine
+- name: "VMWARE: Create the virtual machine for SNO"
   community.vmware.vmware_guest:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -293,8 +343,21 @@
   # delegate_to: localhost
   register: deploy_vm
 
+# Show Content of var
+# - name: "Inspect deploy_vm"
+#   debug:
+#     var: deploy_vm
+
+
+# Get mac-adress of create vm
+# - name: "Retrieve MAC address of the created VM"
+#   debug:
+#     msg: >
+#       {{ deploy_vm.instance.hw_eth0.macaddress }}
+
+
 # Bootreihenfolge festlegen
-- name: Change virtual machine's boot order and related parameters
+- name: "VMWARE: Change virtual machine's boot order and related parameters"
   community.vmware.vmware_guest_boot_manager:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -304,9 +367,29 @@
     enter_bios_setup: false
     boot_retry_enabled: true
     boot_retry_delay: 22300
-    boot_firmware: bios
-    secure_boot_enabled: false
+    boot_firmware: efi
+    secure_boot_enabled: true
     boot_order:
       - disk
       - cdrom
       - ethernet
+
+# - name: "Display DNS configuration reminder"
+#   debug:
+#     msg: |
+#       Bitte vergiss nicht deinen DNS-Server zu konfigurieren!
+#       ## SNO2
+#       address=/.apps.{{ cluster_name }}.home.local/{{ ip_address }}
+#       address=/api-int.{{ cluster_name }}.home.local/{{ ip_address }}
+#       address=/api.{{ cluster_name }}.home.local/{{ ip_address }}
+#       dhcp-host={{ deploy_vm.instance.hw_eth0.macaddress }},{{ ip_address }},{{ cluster_name }}
+
+- name: "Display DNS configuration reminder in better format"
+  debug:
+    msg:
+      - "Bitte vergiss nicht deinen DNS-Server zu konfigurieren!"
+      - "## SNO2"
+      - "address=/.apps.{{ cluster_name }}.home.local/{{ ip_address }}"
+      - "address=/api-int.{{ cluster_name }}.home.local/{{ ip_address }}"
+      - "address=/api.{{ cluster_name }}.home.local/{{ ip_address }}"
+      - "dhcp-host={{ deploy_vm.instance.hw_eth0.macaddress }},{{ ip_address }},{{ cluster_name }}"

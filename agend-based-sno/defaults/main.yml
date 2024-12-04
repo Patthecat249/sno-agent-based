@@ -26,14 +26,17 @@ iso_file: "rhcos-live.iso"
 # Working directories
 base_dir: "/opt/sva"
 cluster_dir: "{{ base_dir }}/sno-clusters/{{ cluster_name }}"
+network_dir: "{{ base_dir }}/sno-clusters/{{ cluster_name }}/network-configs/"
 dir_downloads: "{{ base_dir }}/downloads/"
 dir_certs: "{{ base_dir }}/certs/"
 dir_entpackt: "{{ dir_certs }}certs/lin/"
 ssh_key_dir: "{{ base_dir }}/ssh-keys/{{ cluster_name }}"
 
 # VM-Settings
-ip_address: "10.0.249.149/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
+ip_address: "10.0.249.149"      # Beispiel IP-Adresse, kann variabel gesetzt werden
+ip_address_and_subnet: "10.0.249.149/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 gateway: "10.0.249.1"              # Beispiel Gateway, kann variabel gesetzt werden
+dns_server: "10.0.249.53"
 dns_servers:                       # Beispiel DNS-Server, kann variabel gesetzt werden
   - "8.8.8.8"
   - "8.8.4.4"
