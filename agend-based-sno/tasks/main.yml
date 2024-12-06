@@ -28,16 +28,17 @@
     executable: pip3
 
 # Everything for a clean installation of the same cluster
-- name: "ENVIRONMENT: Clean Cluster directories for a fresh installation"
+- name: "CLEAN: Clean Cluster directories for a fresh installation"
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
   loop:
     - "{{ ssh_key_dir }}"
     - "{{ cluster_dir }}"
+    - "{{ network_dir}}"
 
 # Remove ISO-File if exists, because of a new fresh installation
-- name: "ENVIRONMENT: Delete the iso-file /opt/sva/downloads/sno2.iso"
+- name: "CLEAN: Delete the iso-file /opt/sva/downloads/sno2.iso"
   ansible.builtin.file:
     path: "{{ dir_downloads }}{{ cluster_name }}.iso"
     state: absent
@@ -49,32 +50,22 @@
     mode: '0644'
   loop:
     - "{{ base_dir }}"
-    - "{{ base_dir }}/ssh-keys"
-    - "{{ base_dir }}/sno-clusters"
-    - "{{ base_dir }}/downloads"
-    - "{{ base_dir }}/certs"
+    - "{{ base_dir }}ssh-keys"
+    - "{{ base_dir }}sno-clusters"
+    - "{{ base_dir }}downloads"
+    - "{{ base_dir }}certs"
     - "{{ ssh_key_dir }}"
     - "{{ cluster_dir }}"
     - "{{ network_dir }}"
 
-# BEGIN Templating der Netzwerkfiles für ISO-Customize
+# BEGIN Templating the network-files for ISO-Customize
 # Template lan.nmconnection.j2
-- name: "COREOS-INSTALLER: Template the lan.nmconnection.j2"
+- name: "COREOS-INSTALLER: Template the ens33.nmconnection.j2"
   ansible.builtin.template:
-    src: lan.nmconnection.j2
-    dest: "{{ network_dir }}lan.nmconnection"
+    src: ens33.nmconnection.j2
+    dest: "{{ network_dir }}ens33.nmconnection"
     mode: '0644'
 
-
-
-
-
-
-
-
-
-
-# END
 - name: "ENVIRONMENT: Create SSH directory if it does not exist"
   ansible.builtin.file:
     path: "{{ ssh_key_dir }}"
@@ -202,7 +193,10 @@
 - name: "OPENSHIFT-INSTALL: Create single-node-ignition-config"
   ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install --dir={{ base_dir }}/sno-clusters/{{ cluster_name }} create single-node-ignition-config"
 
-
+### END THE PLAYBOOK HERE
+- name: Stop the playbook here
+  ansible.builtin.meta: end_play
+### END THE PLAYBOOK HERE
 
 # Embed the ignition file
 - name: "COREOS-INSTALLER: Embed Ignition file into RHCOS ISO using coreos-installer"
@@ -213,30 +207,18 @@
     -v {{ base_dir }}:/data
     -w /data
     quay.io/coreos/coreos-installer:release
-    iso ignition embed -fi sno-clusters/{{ cluster_name}}/{{ ignition_file }} downloads/{{ iso_file }} -o downloads/{{ cluster_name }}-temp.iso
+    iso ignition embed -fi sno-clusters/{{ cluster_name}}/{{ ignition_file }} downloads/{{ iso_file }} -o downloads/{{ cluster_name }}.iso
   args:
     chdir: "{{ cluster_dir }}"
 
 
 
 # BEGIN: INSERT BUTANE HOSTNAME and NETWORKCONFIGURATION to {{ base_dir }}/sno-clusters/
-- name: "COREOS-INSTALLER: Embed network-config using iso customize with coreos-installer"
-  ansible.builtin.command: >
-    podman run --privileged --rm -v {{ base_dir }}:/data -w /data quay.io/coreos/coreos-installer:release iso customize -f --dest-device /dev/sda --network-keyfile ./sno-clusters/{{ cluster_name }}/network-configs/lan.nmconnection downloads/{{ cluster_name }}-temp.iso -o downloads/{{ cluster_name }}.iso
-  args:
-    chdir: "{{ cluster_dir }}"
-
-
-
-
-
-
-
-
-
-
-
-
+# - name: "COREOS-INSTALLER: Embed network-config using iso customize with coreos-installer"
+#   ansible.builtin.command: >
+#     podman run --privileged --rm -v {{ base_dir }}:/data -w /data quay.io/coreos/coreos-installer:release iso customize -f --dest-device /dev/sda --network-keyfile ./network-configs/{{ cluster_name }}/lan.nmconnection downloads/{{ cluster_name }}-temp.iso -o downloads/{{ cluster_name }}.iso
+#   args:
+#     chdir: "{{ cluster_dir }}"
 
 
 # END: INSERT BUTANE HOSTNAME and NETWORKCONFIGURATION to {{ base_dir }}/sno-clusters/
@@ -334,7 +316,7 @@
         unit_number: 1
         state: present
         type: iso
-        iso_path: "[local-ssd] sno/sno2.iso"
+        iso_path: "[local-ssd] sno/{{ cluster_name }}.iso"
     networks:
     - name: pg-home
       device_type: vmxnet3

@@ -23,14 +23,14 @@ disk_size_gb: 200
 ignition_file: "bootstrap-in-place-for-live-iso.ign"
 iso_file: "rhcos-live.iso"
 
-# Working directories
-base_dir: "/opt/sva"
-cluster_dir: "{{ base_dir }}/sno-clusters/{{ cluster_name }}"
-network_dir: "{{ base_dir }}/sno-clusters/{{ cluster_name }}/network-configs/"
-dir_downloads: "{{ base_dir }}/downloads/"
-dir_certs: "{{ base_dir }}/certs/"
+# Working directories always end with slashes
+base_dir: "/opt/sva/"
+cluster_dir: "{{ base_dir }}sno-clusters/{{ cluster_name }}/"
+network_dir: "{{ base_dir }}network-configs/{{ cluster_name }}/"
+dir_downloads: "{{ base_dir }}downloads/"
+dir_certs: "{{ base_dir }}certs/"
 dir_entpackt: "{{ dir_certs }}certs/lin/"
-ssh_key_dir: "{{ base_dir }}/ssh-keys/{{ cluster_name }}"
+ssh_key_dir: "{{ base_dir }}ssh-keys/{{ cluster_name }}/"
 
 # VM-Settings
 ip_address: "10.0.249.149"      # Beispiel IP-Adresse, kann variabel gesetzt werden
