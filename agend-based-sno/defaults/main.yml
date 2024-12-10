@@ -1,5 +1,5 @@
 # defaults file for agend-based-sno
-openshift_version: "4.16.20"
+openshift_version: "4.16.24"
 openshift_base_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
 openshift_installer_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-install-linux.tar.gz"
 openshift_client_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-client-linux.tar.gz"
@@ -32,7 +32,11 @@ dir_certs: "{{ base_dir }}certs/"
 dir_entpackt: "{{ dir_certs }}certs/lin/"
 ssh_key_dir: "{{ base_dir }}ssh-keys/{{ cluster_name }}/"
 
+# files
+filename_agent_iso: "agent.x86_64.iso"
+
 # VM-Settings
+network_interface_name_of_vm: "ens192"
 ip_address: "10.0.249.149"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 ip_address_and_subnet: "10.0.249.149/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 gateway: "10.0.249.1"              # Beispiel Gateway, kann variabel gesetzt werden

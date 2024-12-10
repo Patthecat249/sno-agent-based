@@ -1,0 +1,41 @@
+apiVersion: v1alpha1
+kind: AgentConfig
+metadata:
+  name: {{ cluster_name }}
+rendezvousIP: {{ ip_address }}
+hosts:
+  - hostname: {{ cluster_name }}
+    interfaces:
+      - name: {{ network_interface_name_of_vm }}
+        macAddress: 00:50:56:9c:49:8a 
+    networkConfig:
+      interfaces:
+        - name: {{ network_interface_name_of_vm }}
+          type: ethernet
+          state: up
+          mac-address: 00:50:56:9c:49:8a
+          ipv4:
+            enabled: true
+            address:
+              - ip: {{ ip_address }}
+                prefix-length: 24
+            dhcp: false
+          ipv6:
+            enabled: false
+      dns-resolver:
+        config:
+          search:
+          - {{ base_domain }}
+          server:
+          - {{ dns_server }}
+      routes:
+        config:
+          - destination: 0.0.0.0/0
+            next-hop-address: {{ gateway }}
+            next-hop-interface: {{ network_interface_name_of_vm }}
+            table-id: 254
+      route-rules:
+        config:
+          - priority: 100
+            route-table: 254
+            family: ipv4

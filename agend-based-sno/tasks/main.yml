@@ -8,6 +8,7 @@
       - jq
       - podman
       - python3
+      - nmstate
     state: present
 
 - name: "SOFTWARE: Install python3-pip"
@@ -58,13 +59,13 @@
     - "{{ cluster_dir }}"
     - "{{ network_dir }}"
 
-# BEGIN Templating the network-files for ISO-Customize
-# Template lan.nmconnection.j2
-- name: "COREOS-INSTALLER: Template the ens33.nmconnection.j2"
-  ansible.builtin.template:
-    src: ens33.nmconnection.j2
-    dest: "{{ network_dir }}ens33.nmconnection"
-    mode: '0644'
+# # BEGIN Templating the network-files for ISO-Customize
+# # Template lan.nmconnection.j2
+# - name: "COREOS-INSTALLER: Template the ens33.nmconnection.j2"
+#   ansible.builtin.template:
+#     src: ens33.nmconnection.j2
+#     dest: "{{ network_dir }}ens33.nmconnection"
+#     mode: '0644'
 
 - name: "ENVIRONMENT: Create SSH directory if it does not exist"
   ansible.builtin.file:
@@ -154,11 +155,17 @@
     dest: "{{ cluster_dir }}/install-config.yaml"
     mode: '0644'
 
-- name: "OPENSHIFT: Template butane.yaml in cluster directory"
+- name: "OPENSHIFT: Template agent-config.yaml in cluster directory"
   ansible.builtin.template:
-    src: butane.conf.j2
-    dest: "{{ cluster_dir }}/butane.yaml"
+    src: agent-config-with-network.yaml.j2
+    dest: "{{ cluster_dir }}/agent-config.yaml"
     mode: '0644'
+
+# - name: "OPENSHIFT: Template butane.yaml in cluster directory"
+#   ansible.builtin.template:
+#     src: butane.conf.j2
+#     dest: "{{ cluster_dir }}/butane.yaml"
+#     mode: '0644'
 
 # Backup -install-config.yaml
 - name: "OPENSHIFT: Make a copy of install-config.yaml to shared directory (install-config-{{ cluster_name }}.yaml)"
@@ -167,11 +174,17 @@
     dest: "{{ base_dir }}/sno-clusters/install-config-{{ cluster_name }}.yaml"
     mode: '0644'
 
-- name: "OPENSHIFT: Make a copy of butane.yaml to shared directory (butane-{{ cluster_name }}.yaml)"
+- name: "OPENSHIFT: Make a copy of agent-config.yaml to shared directory (install-config-{{ cluster_name }}.yaml)"
   ansible.builtin.template:
-    src: "butane.conf.j2"
-    dest: "{{ base_dir }}/sno-clusters/butane-{{ cluster_name }}.yaml"
+    src: "agent-config-with-network.yaml.j2"
+    dest: "{{ base_dir }}/sno-clusters/agent-config-{{ cluster_name }}.yaml"
     mode: '0644'
+
+# - name: "OPENSHIFT: Make a copy of butane.yaml to shared directory (butane-{{ cluster_name }}.yaml)"
+#   ansible.builtin.template:
+#     src: "butane.conf.j2"
+#     dest: "{{ base_dir }}/sno-clusters/butane-{{ cluster_name }}.yaml"
+#     mode: '0644'
 
 - name: "OPENSHIFT: Retrieve URL for rhcos-live.iso"
   ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install coreos print-stream-json | grep location | grep {{ arch }} | grep iso | cut -d'\"' -f4"
@@ -182,34 +195,58 @@
     iso_url: "{{ iso_output.stdout }}"
   when: iso_output.stdout is defined and iso_output.stdout != ""
 
+
+# Muss hier abgelegt werden. 
+# /root/.cache/agent/image_cache/coreos-x86_64.iso
 - name: "DOWNLOAD: rhcos-live.iso from Red Hat"
   ansible.builtin.get_url:
     url: "{{ iso_url }}"
-    dest: "{{ base_dir }}/downloads/rhcos-live.iso"
+    dest: "{{ base_dir }}/downloads/rhcos-live.iso"   # /root/.cache/agent/image_cache/coreos-x86_64.iso
     mode: '0644'
   when: iso_url is defined
 
-# Create the ignition-file 
-- name: "OPENSHIFT-INSTALL: Create single-node-ignition-config"
-  ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install --dir={{ base_dir }}/sno-clusters/{{ cluster_name }} create single-node-ignition-config"
+# Execute: openshift-install agent create image
+# openshift-install --dir <install_directory> agent create image
+# - name: "OPENSHIFT-INSTALL: Create Agent-Based-ISO"
+#   ansible.builtin.shell: "{{ base_dir }}downloads/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create image"
 
-### END THE PLAYBOOK HERE
-- name: Stop the playbook here
-  ansible.builtin.meta: end_play
-### END THE PLAYBOOK HERE
+# Generate Zero-Touch-Provisioning YAML to cluster-dir
+# openshift-install agent create cluster-manifests --dir <installation_directory>
+- name: "OPENSHIFT-INSTALL: Create Cluster-Manifests-Directory for Zero-Touch-Provisioning"
+  ansible.builtin.shell: "{{ base_dir }}downloads/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create cluster-manifests"
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/openshift-install:{{ base_dir }}downloads/oc"
+
+# INSERT ZTP Yaml-Files to customize the SNO-Installation
+
+- name: "OPENSHIFT-INSTALL: Create Agent-Based-ISO"
+  ansible.builtin.shell: "{{ base_dir }}downloads/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create image"
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/openshift-install:{{ base_dir }}downloads/oc"
+
+
+# ### END THE PLAYBOOK HERE
+# - name: Stop the playbook here
+#   ansible.builtin.meta: end_play
+# ### END THE PLAYBOOK HERE
+
+# Create the ignition-file 
+# - name: "OPENSHIFT-INSTALL: Create single-node-ignition-config"
+#   ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install --dir={{ base_dir }}/sno-clusters/{{ cluster_name }} create single-node-ignition-config"
+
 
 # Embed the ignition file
-- name: "COREOS-INSTALLER: Embed Ignition file into RHCOS ISO using coreos-installer"
-  ansible.builtin.command: >
-    podman run --privileged --pull always --rm
-    -v /dev:/dev
-    -v /run/udev:/run/udev
-    -v {{ base_dir }}:/data
-    -w /data
-    quay.io/coreos/coreos-installer:release
-    iso ignition embed -fi sno-clusters/{{ cluster_name}}/{{ ignition_file }} downloads/{{ iso_file }} -o downloads/{{ cluster_name }}.iso
-  args:
-    chdir: "{{ cluster_dir }}"
+# - name: "COREOS-INSTALLER: Embed Ignition file into RHCOS ISO using coreos-installer"
+#   ansible.builtin.command: >
+#     podman run --privileged --pull always --rm
+#     -v /dev:/dev
+#     -v /run/udev:/run/udev
+#     -v {{ base_dir }}:/data
+#     -w /data
+#     quay.io/coreos/coreos-installer:release
+#     iso ignition embed -fi sno-clusters/{{ cluster_name}}/{{ ignition_file }} downloads/{{ iso_file }} -o downloads/{{ cluster_name }}.iso
+#   args:
+#     chdir: "{{ cluster_dir }}"
 
 
 
@@ -285,12 +322,15 @@
     method: PUT
     user: "{{ esx_host_username }}"
     password: "{{ esx_host_password }}"
-    src: "{{ dir_downloads }}{{ cluster_name }}.iso"
+    # sno2/agent.x86_64.iso
+    src: "{{ cluster_dir }}{{filename_agent_iso}}"
     force_basic_auth: true
     status_code: 201
     remote_src: true
 
-# Erzeuge ein VM für SNO
+# Erzeuge eine VM für SNO
+# !!!disk.EnableUUID=TRUE mit einbauen!!!
+
 - name: "VMWARE: Create the virtual machine for SNO"
   community.vmware.vmware_guest:
     hostname: "{{ vcenter_hostname }}"
@@ -320,6 +360,7 @@
     networks:
     - name: pg-home
       device_type: vmxnet3
+      mac: "00:50:56:9c:49:8a"
     # wait_for_ip_address: true
     # wait_for_ip_address_timeout: 600
   # delegate_to: localhost
@@ -356,16 +397,16 @@
       - cdrom
       - ethernet
 
-# - name: "Display DNS configuration reminder"
-#   debug:
-#     msg: |
-#       Bitte vergiss nicht deinen DNS-Server zu konfigurieren!
-#       ## SNO2
-#       address=/.apps.{{ cluster_name }}.home.local/{{ ip_address }}
-#       address=/api-int.{{ cluster_name }}.home.local/{{ ip_address }}
-#       address=/api.{{ cluster_name }}.home.local/{{ ip_address }}
-#       dhcp-host={{ deploy_vm.instance.hw_eth0.macaddress }},{{ ip_address }},{{ cluster_name }}
+- name: Set the state of a virtual machine to poweron
+  community.vmware.vmware_guest_powerstate:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: "/{{ datacenter }}/vm/openshift"
+    name: "{{ cluster_name }}"
+    state: powered-on
 
+# Zeige den Output für die DNSMASQ-Konfiguration an
 - name: "Display DNS configuration reminder in better format"
   debug:
     msg:

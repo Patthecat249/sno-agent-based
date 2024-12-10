@@ -4,8 +4,10 @@ metadata:
   name: "{{ cluster_name }}"
 compute:
 - name: worker
+  architecture: amd64
   replicas: 0
 controlPlane:
+  architecture: amd64
   name: master
   replicas: 1
 networking:
@@ -15,11 +17,11 @@ networking:
   networkType: OVNKubernetes
   serviceNetwork:
   - 172.30.0.0/16
+  machineNetwork:
+  - cidr: 10.0.249.0/24
 platform:
   none: {}
 fips: false
-bootstrapInPlace:
-  installationDisk: /dev/sda
 pullSecret: '{{ lookup('file', path_to_pull_secret) }}'
 sshKey: "{{ ssh_public_key }}"
 
