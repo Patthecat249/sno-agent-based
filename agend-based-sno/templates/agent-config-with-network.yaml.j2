@@ -7,13 +7,13 @@ hosts:
   - hostname: {{ cluster_name }}
     interfaces:
       - name: {{ network_interface_name_of_vm }}
-        macAddress: 00:50:56:9c:49:8a 
+        macAddress: {{ mac_address }} 
     networkConfig:
       interfaces:
         - name: {{ network_interface_name_of_vm }}
           type: ethernet
           state: up
-          mac-address: 00:50:56:9c:49:8a
+          mac-address: {{ mac_address }}
           ipv4:
             enabled: true
             address:

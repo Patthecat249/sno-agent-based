@@ -58,8 +58,8 @@ cd $MYPATH/git/sno-agent-based/
 ansible-playbook install-sno.yaml --vault-password-file $MYPATH/password.txt
 
 ```
-### Customize Clustername and IP-Address
+### Customize Clustername and IP-Address and MAC-Address
 ```bash
 cd $MYPATH/git/sno-agent-based/
-ansible-playbook install-sno.yaml --vault-password-file $MYPATH/password.txt -e "cluster_name=sno2" -e "ip_address=10.0.249.54"
+ansible-playbook install-sno.yaml --vault-password-file $MYPATH/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
 ```

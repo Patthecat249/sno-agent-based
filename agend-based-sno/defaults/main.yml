@@ -6,6 +6,9 @@ openshift_client_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshif
 base_domain: "home.local"
 cluster_name: "sno1"  # Der Default-Single-Node-OpenShift-Clustername
 
+# GOVC
+govc_download_link: "https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz"
+
 # vcenter
 vcenter_hostname: "vcenter.home.local"
 esx_host_hostname: "10.0.249.11"

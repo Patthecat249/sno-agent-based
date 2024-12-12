@@ -116,6 +116,22 @@
     create: true
     mode: '0644'
 
+# Install GOVC on Bastion-Host
+# wget https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz
+# tar xf govc_Linux_x86_64.tar.gz 
+# mv govc /usr/local/bin/
+- name: "DOWNLOAD: GOVC-Client (govc)"
+  ansible.builtin.get_url:
+    url: "{{ govc_download_link }}"
+    dest: "{{ base_dir }}/downloads/govc_Linux_x86_64.tar.gz"
+    mode: '0644'
+
+- name: "UNARCHIVE: Extract GOVC-Tar-File (govc)"
+  ansible.builtin.unarchive:
+    src: "{{ base_dir }}/downloads/govc_Linux_x86_64.tar.gz"
+    dest: "{{ base_dir }}/downloads/"
+    remote_src: true
+
 - name: "ENVIRONMENT: Source OpenShift path script"
   ansible.builtin.shell: source /etc/profile.d/openshift_path.sh
   args:
@@ -343,6 +359,9 @@
     guest_id: rhel9_64Guest
     # This is hostname of particular ESXi server on which user wants VM to be deployed
     # esxi_hostname: "{{ esxi_hostname }}"
+    # customvalues:
+    #   - key: disk.EnableUUID   # add the Advanced Configuration Parameter 
+    #     value: TRUE
     disk:
     - size_gb: "{{ disk_size_gb }}"
       type: thin
@@ -360,24 +379,28 @@
     networks:
     - name: pg-home
       device_type: vmxnet3
-      mac: "00:50:56:9c:49:8a"
+      mac: "{{ mac_address }}"
     # wait_for_ip_address: true
     # wait_for_ip_address_timeout: 600
   # delegate_to: localhost
   register: deploy_vm
-
-# Show Content of var
-# - name: "Inspect deploy_vm"
-#   debug:
-#     var: deploy_vm
+  # tags:
+  #   - customattribut
 
 
-# Get mac-adress of create vm
-# - name: "Retrieve MAC address of the created VM"
-#   debug:
-#     msg: >
-#       {{ deploy_vm.instance.hw_eth0.macaddress }}
 
+# Set advanced configuration parameters via GOVC
+# disk.EnableUUID=TRUE
+- name: "GOVC: Set advanced configuration parameters via GOVC for sno2"
+  ansible.builtin.shell: "govc vm.change -vm=sno2 -e disk.EnableUUID=TRUE"
+  environment:
+    GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
+    GOVC_USERNAME: "{{ vcenter_username }}"
+    GOVC_PASSWORD: "{{ vcenter_password }}"
+    GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+  tags:
+    - customattribut
 
 # Bootreihenfolge festlegen
 - name: "VMWARE: Change virtual machine's boot order and related parameters"
