@@ -1,4 +1,5 @@
 # defaults file for agend-based-sno
+# Openshift
 openshift_version: "4.16.24"
 openshift_base_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
 openshift_installer_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-install-linux.tar.gz"
@@ -49,3 +50,6 @@ dns_servers:                       # Beispiel DNS-Server, kann variabel gesetzt 
   - "8.8.4.4"
 
 arch: "x86_64"
+
+# Container-Image-Registry
+my_container_image_registry: "patrick.artifactory.home.local"
