@@ -28,6 +28,9 @@ mkdir -p $MYPATH/git && cd $MYPATH/git && git clone https://github.com/Patthecat
 # How to build the Container
 ## Build the snohelper-Container with the Containerfile
 ```bash
+cd $MYPATH/git/sno-agent-based
+git switch containerhelper
+
 # Change the git-root-folder of the Github Repositoriy
 podman build -t snohelper-rockylinux:9.3 -f $MYPATH/git/sno-agent-based/containerfile/Containerfile
 ```
@@ -36,19 +39,19 @@ podman build -t snohelper-rockylinux:9.3 -f $MYPATH/git/sno-agent-based/containe
 ```bash
 
 # The installationfiles will be stored under /opa/sva
-mkdir /opt/sva
+mkdir -p /opt/sva/credentials
 podman run --rm -it -v .:/workspace -v /opt/sva:/opt/sva --name snohelper localhost/snohelper-rockylinux:9.3 /bin/bash
+# Falls SELinux aktiv ist, bitte folgenden Befehl verwenden
+podman run --rm -it -v .:/workspace:z -v /opt/sva:/opt/sva:z --name snohelper localhost/snohelper-rockylinux:9.3 /bin/bash
 
 ```
-
-
-
 
 ## Create a ansible-vault with your vcenter-credentials
 This file is needed to connect to your vcenter. Remember your password. You will paste it in a file in a few steps.
 ```bash
+
 # Create a vcenter credentials file
-ansible-vault create $MYPATH/git/sno-agent-based/agend-based-sno/vars/vcenter_credentials.yaml
+ansible-vault create /opt/sva/credentials/vcenter_credentials.yaml
 vcenter_username: "<vcenter-username>"
 vcenter_password: "<vcenter-password>"
 esx_host_username: "<esx_host-username>"
@@ -61,14 +64,14 @@ container_registry_password: "<container_registry_password>"
 This file contains your Red Hat pull-secret. Please Download from and paste it into the file:
 <https://console.redhat.com/openshift/downloads>
 ```bash
-ansible-vault create $MYPATH/git/sno-agent-based/agend-based-sno/vars/pull-secret
+ansible-vault create /opt/sva/credentials/pull-secret
 # Paste your Red Hat pull-secret here
 ```
 
 ## Create a password-file for your ansible-vault password
 This file contains your ansible-vault password to run the ansible-playbook without asking for vault-password
 ```bash
-echo "Test1234" > $MYPATH/password.txt
+echo "Test1234" > /opt/sva/credentials/password.txt
 ```
 
 ## Run this playbook to create your install-config.yaml for your OpenShift-Installation
@@ -77,21 +80,25 @@ You can choose one of the parameters to prepare your install-config file.
 ### Install with Defaults from vars/main.yaml
 ```bash
 # ansible-playbook 01-playbook.yaml --ask-vault-pass
-cd $MYPATH/git/sno-agent-based/
-ansible-playbook install-sno.yaml --vault-password-file $MYPATH/password.txt
+cd /workspace
+ansible-playbook install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt
 
 ```
 ### Customize Clustername and IP-Address and MAC-Address
 ```bash
-cd $MYPATH/git/sno-agent-based/
-ansible-playbook install-sno.yaml --vault-password-file $MYPATH/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
+cd /workspace
+ansible-playbook install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
 
 ### Im Container ausführen
-MYPATH=$(pwd)
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file $MYPATH/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
+cd /workspace
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
+
+# Oder 
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.10.4" -e "mac_address=00:50:56:9c:49:8c"
 ```
 
-# How to mirror necessary tools like oc, openshift-install, kubectl, etc.
+# Optional Section
+## How to mirror necessary tools like oc, openshift-install, kubectl, etc.
 
 ```bash
 #!/bin/bash

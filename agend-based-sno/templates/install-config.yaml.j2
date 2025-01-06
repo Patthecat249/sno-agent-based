@@ -18,7 +18,7 @@ networking:
   serviceNetwork:
   - 172.30.0.0/16
   machineNetwork:
-  - cidr: 10.0.249.0/24
+  - cidr: "{{ ip_address_and_subnet }}"
 platform:
   none: {}
 fips: false
