@@ -11,22 +11,22 @@
       - nmstate
     state: present
 
-- name: "SOFTWARE: Install python3-pip"
-  ansible.builtin.package:
-    name: python3-pip
-    state: present
+# - name: "SOFTWARE: Install python3-pip"
+#   ansible.builtin.package:
+#     name: python3-pip
+#     state: present
 
-- name: "SOFTWARE: Install pyvmomi via pip3"
-  ansible.builtin.pip:
-    name: pyvmomi
-    state: present
-    executable: pip3
+# - name: "SOFTWARE: Install pyvmomi via pip3"
+#   ansible.builtin.pip:
+#     name: pyvmomi
+#     state: present
+#     executable: pip3
 
-- name: "SOFTWARE: Install requests via pip3"
-  ansible.builtin.pip:
-    name: requests
-    state: present
-    executable: pip3
+# - name: "SOFTWARE: Install requests via pip3"
+#   ansible.builtin.pip:
+#     name: requests
+#     state: present
+#     executable: pip3
 
 # Everything for a clean installation of the same cluster
 - name: "CLEAN: Clean Cluster directories for a fresh installation"
