@@ -1,14 +1,20 @@
 # defaults file for agend-based-sno
 # Openshift
 openshift_version: "4.16.24"
-openshift_base_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
-openshift_installer_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-install-linux.tar.gz"
-openshift_client_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-client-linux.tar.gz"
+openshift_coreos: "4.16.3"
+openshift_major: "4.16"
+# openshift_base_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
+openshift_base_url: "https://artifactory.home.local:443/artifactory/generic/pub/openshift-v4/x86_64/clients/ocp"
+# https://artifactory.home.local:443/artifactory/generic/pub/openshift-v4/x86_64/clients/ocp/4.16.24/openshift-client-linux-4.16.24.tar.gz
+openshift_installer_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-install-linux-{{ openshift_version }}.tar.gz"
+openshift_client_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-client-linux-{{ openshift_version }}.tar.gz"
 base_domain: "home.local"
 cluster_name: "sno1"  # Der Default-Single-Node-OpenShift-Clustername
 
 # GOVC
-govc_download_link: "https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz"
+# https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz
+# govc_download_link: "https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz"    # original
+govc_download_link: "https://artifactory.home.local:443/artifactory/generic/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz"
 
 # vcenter
 vcenter_hostname: "vcenter.home.local"
@@ -52,4 +58,6 @@ dns_servers:                       # Beispiel DNS-Server, kann variabel gesetzt 
 arch: "x86_64"
 
 # Container-Image-Registry
+container_image_registry_root: "artifactory.home.local"
 my_container_image_registry: "patrick.artifactory.home.local"
+url_coreos_iso_in_artifactory: "https://{{ container_image_registry_root }}/artifactory/generic/pub/openshift-v4/x86_64/dependencies/rhcos/{{ openshift_major }}/{{ openshift_coreos }}/rhcos-{{ openshift_coreos }}-x86_64-live.x86_64.iso"

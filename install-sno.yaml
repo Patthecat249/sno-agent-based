@@ -1,12 +1,12 @@
 - name: Install Single-Node OpenShift on Rocky Linux
-  hosts: sno-playground
+  hosts: localhost
   gather_facts: false
   become: true
   vars_files:
-    - "/root/git/sno-agent-based/agend-based-sno/vars/vcenter_credentials.yaml"
+    - "agend-based-sno/vars/vcenter_credentials.yaml"
   roles:
     - role: agend-based-sno
       vars:
         cluster_name: "sno1"  # Clustername, kann angepasst werden
         ssh_public_key: "{{ lookup('file', '/opt/sva/ssh-keys/' + cluster_name + '/id_rsa_sno1.pub') }}"
-        path_to_pull_secret: "/root/git/sno-agent-based/agend-based-sno/vars/pull-secret"
+        path_to_pull_secret: "agend-based-sno/vars/pull-secret"

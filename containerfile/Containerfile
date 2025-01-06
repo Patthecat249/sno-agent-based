@@ -1,0 +1,39 @@
+# Basisimage
+FROM rockylinux:9.3
+
+# Autor und Informationen
+LABEL maintainer="Patrick Jahn"
+LABEL description="Container mit den für SNO-Installation erforderlichen Paketen"
+
+# System aktualisieren und erforderliche Pakete installieren
+RUN yum -y update && \
+    yum -y install \
+        tar \
+        wget \
+        jq \
+        podman \
+        ansible-core \
+        python3 \
+        python3-pip \
+        nmstate \
+        unzip \
+        && \
+    yum clean all
+
+# Install pyvmomi for access to vcenter with govc
+RUN pip3 install pyvmomi requests
+RUN ansible-galaxy collection install community.vmware
+
+# Download und Installation GOVC
+# oc und openshift-install werden dynamisch nachgeladen beim Ansible-Playbook.
+
+
+# Erzeuge ein File für das pull-secret von Red Hat im Home-Verzeichnis des Users
+# RUN mkdir -p /root/.docker 
+# COPY pull-secret /root/.docker/config.json
+
+# Arbeitsverzeichnis festlegen
+WORKDIR /workspace
+
+# Standardbefehl
+CMD ["/bin/bash"]
