@@ -464,7 +464,7 @@
         type: iso
         iso_path: "[local-ssd] sno/{{ cluster_name }}.iso"
     networks:
-    - name: pg-home
+    - name: "{{ network_name }}"
       device_type: vmxnet3
       mac: "{{ mac_address }}"
     # wait_for_ip_address: true
@@ -478,7 +478,7 @@
 
 # Set advanced configuration parameters via GOVC
 # disk.EnableUUID=TRUE
-- name: "GOVC: Set advanced configuration parameters via GOVC for sno2"
+- name: "GOVC: Set advanced configuration parameters via GOVC"
   ansible.builtin.shell: "govc vm.change -vm={{ cluster_name }} -e disk.EnableUUID=TRUE"
   environment:
     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
