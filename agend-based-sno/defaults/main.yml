@@ -49,6 +49,7 @@ filename_agent_iso: "agent.x86_64.iso"
 network_interface_name_of_vm: "ens192"
 ip_address: "10.0.249.149"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 ip_address_and_subnet: "172.16.11.4/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
+cidr_and_subnet: "172.16.11.0/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 # ip_address_and_subnet: "10.0.249.149/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 gateway: "172.16.11.1"              # Beispiel Gateway, kann variabel gesetzt werden
 # gateway: "10.0.249.1"              # Beispiel Gateway, kann variabel gesetzt werden
