@@ -25,26 +25,21 @@ dnf install -y git podman
 # git clone
 ```bash
 MYPATH=$PWD
-mkdir -p $MYPATH/git && cd $MYPATH/git && git clone https://github.com/Patthecat249/sno-agent-based.git
+mkdir -p $MYPATH/git && cd $MYPATH/git && git clone https://github.com/Patthecat249/sno-agent-based.git && cd $MYPATH/git/sno-agent-based && git switch complete-air-gap
 ```
 
-```
 # How to build the Container
-
-Containerfile muss vorher gebaut werden!
-
+bash```
+# Containerfile muss vorher gebaut werden!
+```
 ## Build the snohelper-Container with the Containerfile
-```bash
-cd $MYPATH/git/sno-agent-based
-git switch containerhelper
 
-# Change the git-root-folder of the Github Repositoriy
+```bash
+# Run the podman build command
 podman build -t snohelper-rockylinux:9.3 -f $MYPATH/git/sno-agent-based/containerfile/Containerfile
 ```
 
-
 ```bash
-
 # The installationfiles will be stored under /opa/sva
 mkdir -p /opt/sva/credentials
 podman run --rm -it -v .:/workspace -v /opt/sva:/opt/sva --name snohelper localhost/snohelper-rockylinux:9.3 /bin/bash

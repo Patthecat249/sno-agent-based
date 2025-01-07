@@ -325,7 +325,7 @@
 # INSERT ZTP Yaml-Files to customize the SNO-Installation
 
 - name: "OPENSHIFT-INSTALL: Create Agent-Based-ISO"
-  ansible.builtin.shell: "{{ base_dir }}downloads/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create image"
+  ansible.builtin.shell: "/usr/local/bin/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create image"
   environment:
     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads"
     # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/openshift-install:{{ base_dir }}downloads/oc"
