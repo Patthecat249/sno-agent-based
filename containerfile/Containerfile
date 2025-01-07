@@ -20,6 +20,11 @@ ENV OPENSHIFT_INSTALLER_URL=https://${REGISTRY_URL}:443/artifactory/generic/pub/
 # Set environment variables for GOVC
 ENV GOVC_DOWNLOAD_LINK=https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz
 
+# Set VMware variables
+ARG VCENTER_HOSTNAME='vcenter.home.local'
+ARG DIR_DOWNLOADS=/tmp/
+ARG DIR_CERTS=/etc/vcenter_certs/
+
 # Create directories for downloads
 RUN mkdir -p ${BASE_DIR}
 
@@ -47,6 +52,27 @@ RUN yum -y update && \
 # Install pyvmomi for access to vcenter with govc and ansible-collection to use ansible-vmware-modules
 RUN pip3 install pyvmomi requests
 RUN ansible-galaxy collection install community.vmware
+
+# Download vCenter-Root-CA-Certificates
+# Step 1: Download vCenter certificates
+RUN wget --no-check-certificate \
+    https://${VCENTER_HOSTNAME}/certs/download.zip \
+    -O ${DIR_DOWNLOADS}download.zip \
+    && chmod 0600 ${DIR_DOWNLOADS}download.zip
+
+# Step 2: Extract Root Certificates
+RUN mkdir -p ${DIR_CERTS} && \
+    unzip -q ${DIR_DOWNLOADS}download.zip -d ${DIR_CERTS}
+
+# Step 3: Copy Root Certificates to system trust store
+RUN cp -r ${DIR_CERTS}* /etc/pki/ca-trust/source/anchors/ && \
+    chmod 0644 /etc/pki/ca-trust/source/anchors/*
+
+# Step 4: Refresh the system trust store
+RUN update-ca-trust
+
+# Clean up temporary files
+RUN rm -rf ${DIR_DOWNLOADS}download.zip ${DIR_CERTS}
 
 # Download und Installation GOVC
 # oc und openshift-install werden dynamisch nachgeladen beim Ansible-Playbook.

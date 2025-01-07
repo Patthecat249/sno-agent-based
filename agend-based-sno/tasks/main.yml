@@ -38,43 +38,43 @@
     state: directory
     mode: '0755'
 
-- name: Verify Nginx and Artifactory service availability
-  uri:
-    url: "https://{{ container_image_registry_root }}/ui/login/"
-    method: GET
-    return_content: no
-    validate_certs: false
-  register: artifactory_response
-  failed_when: artifactory_response.status not in [200, 502, 503]
+# - name: Verify Nginx and Artifactory service availability
+#   uri:
+#     url: "https://{{ container_image_registry_root }}/ui/login/"
+#     method: GET
+#     return_content: no
+#     validate_certs: false
+#   register: artifactory_response
+#   failed_when: artifactory_response.status not in [200, 502, 503]
 
-- name: Debug Artifactory service response
-  debug:
-    msg: "Artifactory is running. Status code: {{ artifactory_response.status }}"
-  when: artifactory_response.status == 200
+# - name: Debug Artifactory service response
+#   debug:
+#     msg: "Artifactory is running. Status code: {{ artifactory_response.status }}"
+#   when: artifactory_response.status == 200
 
-- name: Handle Bad Gateway (502) error
-  fail:
-    msg: 
-      - "Artifactory returned 502 Bad Gateway."
-      - "Bitte prüfe die NGINX-Konfiguration oder Artifactory-Verfügbarkeit."
-      - "systemctl status nginx"
-      - "systemctl status artifactory"
-      - "Bitte vergiss nicht die beiden Dienste zu starten!"
-  when: artifactory_response.status == 502
+# - name: Handle Bad Gateway (502) error
+#   fail:
+#     msg: 
+#       - "Artifactory returned 502 Bad Gateway."
+#       - "Bitte prüfe die NGINX-Konfiguration oder Artifactory-Verfügbarkeit."
+#       - "systemctl status nginx"
+#       - "systemctl status artifactory"
+#       - "Bitte vergiss nicht die beiden Dienste zu starten!"
+#   when: artifactory_response.status == 502
 
-- name: Handle Service Unavailable (503) error
-  fail:
-    msg: 
-      - "Artifactory returned 503 Service Unavailable."
-      - "Bitte prüfe, ob dein Artifactory-Server läuft...!!!"
-  when: artifactory_response.status == 503
+# - name: Handle Service Unavailable (503) error
+#   fail:
+#     msg: 
+#       - "Artifactory returned 503 Service Unavailable."
+#       - "Bitte prüfe, ob dein Artifactory-Server läuft...!!!"
+#   when: artifactory_response.status == 503
 
-- name: Fail if Artifactory is not running
-  fail:
-    msg: 
-      - "Artifactory ist nicht erreichbar. Status code: {{ artifactory_response.status }}"
-      - "Bitte prüfe, ob Nginx und Artifactory laufen"
-  when: artifactory_response.status not in [200, 502, 503]
+# - name: Fail if Artifactory is not running
+#   fail:
+#     msg: 
+#       - "Artifactory ist nicht erreichbar. Status code: {{ artifactory_response.status }}"
+#       - "Bitte prüfe, ob Nginx und Artifactory laufen"
+#   when: artifactory_response.status not in [200, 502, 503]
 
 - name: "SSH-KEYS: Generate SSH key if not exists"
   ansible.builtin.command:
@@ -152,37 +152,37 @@
     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads"
     # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/openshift-install:{{ base_dir }}downloads/oc"
 
-# Download -Zertifate vom vCenter
-- name: "BASTION: Download vCenter-Root-Certificates to Bastion-Host"
-  ansible.builtin.get_url:
-    url: "https://{{ vcenter_hostname }}/certs/download.zip"
-    dest: "{{ dir_downloads }}download.zip"
-    mode: '0600'
-    validate_certs: false
-  register: download_result
+# # Download -Zertifate vom vCenter
+# - name: "BASTION: Download vCenter-Root-Certificates to Bastion-Host"
+#   ansible.builtin.get_url:
+#     url: "https://{{ vcenter_hostname }}/certs/download.zip"
+#     dest: "{{ dir_downloads }}download.zip"
+#     mode: '0600'
+#     validate_certs: false
+#   register: download_result
 
-# Extract Root-Certificates
-- name: "BASTION: Extract Root-Certificates to Bastion-Host certs-directory"
-  ansible.builtin.unarchive:
-    src: "{{ dir_downloads }}download.zip"
-    dest: "{{ dir_certs }}"
-    remote_src: true
-  when: download_result is succeeded
+# # Extract Root-Certificates
+# - name: "BASTION: Extract Root-Certificates to Bastion-Host certs-directory"
+#   ansible.builtin.unarchive:
+#     src: "{{ dir_downloads }}download.zip"
+#     dest: "{{ dir_certs }}"
+#     remote_src: true
+#   when: download_result is succeeded
 
-# Copy root-cafile to truststore on Bastion-Host
-- name: "BASTION: Copy all vcenter-rootca-certificate-files to the bastions truststore"
-  ansible.builtin.copy:
-    src: "{{ dir_entpackt }}"
-    dest: "/etc/pki/ca-trust/source/anchors/"
-    owner: root
-    group: root
-    mode: '0644'
-    remote_src: true
+# # Copy root-cafile to truststore on Bastion-Host
+# - name: "BASTION: Copy all vcenter-rootca-certificate-files to the bastions truststore"
+#   ansible.builtin.copy:
+#     src: "{{ dir_entpackt }}"
+#     dest: "/etc/pki/ca-trust/source/anchors/"
+#     owner: root
+#     group: root
+#     mode: '0644'
+#     remote_src: true
 
-# Refresh the truststore of the Bastion-Host
-- name: "BASTION: Refresh Bastion-Host CA-Truststore"
-  ansible.builtin.command: update-ca-trust
-  changed_when: false
+# # Refresh the truststore of the Bastion-Host
+# - name: "BASTION: Refresh Bastion-Host CA-Truststore"
+#   ansible.builtin.command: update-ca-trust
+#   changed_when: false
 
 ### VMWARE
 # Löschen falls vorhanden
