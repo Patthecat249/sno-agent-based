@@ -17,6 +17,9 @@ RUN yum -y update && \
         python3-pip \
         nmstate \
         unzip \
+        bind-utils \
+        iproute \
+        iputils \
         && \
     yum clean all
 
