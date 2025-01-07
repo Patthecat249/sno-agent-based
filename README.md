@@ -21,11 +21,18 @@ This Repository contains an ansible-role to install Single-Node-OpenShift with a
 # Installation git and podman
 dnf install -y git podman
 
+
 # git clone
+```bash
 MYPATH=$PWD
 mkdir -p $MYPATH/git && cd $MYPATH/git && git clone https://github.com/Patthecat249/sno-agent-based.git
 ```
+
+```
 # How to build the Container
+
+Containerfile muss vorher gebaut werden!
+
 ## Build the snohelper-Container with the Containerfile
 ```bash
 cd $MYPATH/git/sno-agent-based
@@ -42,7 +49,7 @@ podman build -t snohelper-rockylinux:9.3 -f $MYPATH/git/sno-agent-based/containe
 mkdir -p /opt/sva/credentials
 podman run --rm -it -v .:/workspace -v /opt/sva:/opt/sva --name snohelper localhost/snohelper-rockylinux:9.3 /bin/bash
 # Falls SELinux aktiv ist, bitte folgenden Befehl verwenden
-podman run --rm -it -v .:/workspace:z -v /opt/sva:/opt/sva:z --name snohelper localhost/snohelper-rockylinux:9.3 /bin/bash
+podman run --rm -it -v .:/workspace:Z -v /opt/sva:/opt/sva:Z --name snohelper localhost/snohelper-rockylinux:9.3 /bin/bash
 
 ```
 
@@ -94,7 +101,8 @@ cd /workspace
 ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
 
 # Oder 
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.10.4" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12"
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.4" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12"
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.4" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
 ```
 
 # Optional Section
