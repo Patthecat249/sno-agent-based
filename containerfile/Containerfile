@@ -61,11 +61,11 @@ RUN wget --no-check-certificate \
     && chmod 0600 ${DIR_DOWNLOADS}download.zip
 
 # Step 2: Extract Root Certificates
-RUN mkdir -p ${DIR_CERTS} && \
+RUN mkdir -p ${DIR_CERTS}certs/lin && \
     unzip -q ${DIR_DOWNLOADS}download.zip -d ${DIR_CERTS}
 
 # Step 3: Copy Root Certificates to system trust store
-RUN cp -r ${DIR_CERTS}/lin/* /etc/pki/ca-trust/source/anchors/ && \
+RUN cp -r ${DIR_CERTS}certs/lin/* /etc/pki/ca-trust/source/anchors/ && \
     chmod 0644 /etc/pki/ca-trust/source/anchors/*
 
 # Step 4: Refresh the system trust store
