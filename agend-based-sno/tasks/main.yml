@@ -311,7 +311,7 @@
 # Generate Zero-Touch-Provisioning YAML to cluster-dir
 # openshift-install agent create cluster-manifests --dir <installation_directory>
 - name: "OPENSHIFT-INSTALL: Create Cluster-Manifests-Directory for Zero-Touch-Provisioning"
-  ansible.builtin.shell: "{{ base_dir }}downloads/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create cluster-manifests"
+  ansible.builtin.shell: "/usr/local/bin/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create cluster-manifests"
   environment:
     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads"
     # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/openshift-install:{{ base_dir }}downloads/oc"
