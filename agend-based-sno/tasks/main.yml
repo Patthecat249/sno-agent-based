@@ -1,15 +1,15 @@
 # tasks file for agend-based-sno
 ---
-- name: "SOFTWARE: Install some necessary tools"
-  ansible.builtin.yum:
-    name:
-      - tar
-      - wget
-      - jq
-      - podman
-      - python3
-      - nmstate
-    state: present
+# - name: "SOFTWARE: Install some necessary tools"
+#   ansible.builtin.yum:
+#     name:
+#       - tar
+#       - wget
+#       - jq
+#       - podman
+#       - python3
+#       - nmstate
+#     state: present
 
 # - name: "SOFTWARE: Install python3-pip"
 #   ansible.builtin.package:
@@ -53,7 +53,7 @@
     - "{{ base_dir }}"
     - "{{ base_dir }}ssh-keys"
     - "{{ base_dir }}sno-clusters"
-    - "{{ base_dir }}downloads"
+    # - "{{ base_dir }}downloads"     # This will be created in the Containerfile-Build
     - "{{ base_dir }}certs"
     - "{{ ssh_key_dir }}"
     - "{{ cluster_dir }}"
@@ -114,60 +114,60 @@
 
 
 
-- name: "DOWNLOAD: OpenShift installer (openshift-install) from Artifactory"
-  ansible.builtin.get_url:
-    url: "{{ openshift_installer_url }}"
-    dest: "{{ base_dir }}downloads/openshift-install-{{ openshift_version }}.tar.gz"
-    mode: '0644'
-    username: "{{ container_registry_username }}"
-    password: "{{ container_registry_password }}"
-    validate_certs: false
+# - name: "DOWNLOAD: OpenShift installer (openshift-install) from Artifactory"
+#   ansible.builtin.get_url:
+#     url: "{{ openshift_installer_url }}"
+#     dest: "{{ base_dir }}downloads/openshift-install-{{ openshift_version }}.tar.gz"
+#     mode: '0644'
+#     username: "{{ container_registry_username }}"
+#     password: "{{ container_registry_password }}"
+#     validate_certs: false
 
-- name: "UNARCHIVE: Check if OpenShift installer is already extracted"
-  ansible.builtin.stat:
-    path: "{{ base_dir }}downloads/openshift-install-{{ openshift_version }}"
-  register: installer_extracted
+# - name: "UNARCHIVE: Check if OpenShift installer is already extracted"
+#   ansible.builtin.stat:
+#     path: "{{ base_dir }}downloads/openshift-install-{{ openshift_version }}"
+#   register: installer_extracted
 
-- name: "UNARCHIVE: Extract OpenShift installer (openshift-install)"
-  ansible.builtin.unarchive:
-    src: "{{ base_dir }}downloads/openshift-install-{{ openshift_version }}.tar.gz"
-    dest: "{{ base_dir }}downloads/"
-    remote_src: true
-  when: not installer_extracted.stat.exists
+# - name: "UNARCHIVE: Extract OpenShift installer (openshift-install)"
+#   ansible.builtin.unarchive:
+#     src: "{{ base_dir }}downloads/openshift-install-{{ openshift_version }}.tar.gz"
+#     dest: "{{ base_dir }}downloads/"
+#     remote_src: true
+#   when: not installer_extracted.stat.exists
 
-- name: "DOWNLOAD: OpenShift client (oc)"
-  ansible.builtin.get_url:
-    url: "{{ openshift_client_url }}"
-    dest: "{{ base_dir }}downloads/openshift-client-{{ openshift_version }}.tar.gz"
-    mode: '0644'
-    username: "{{ container_registry_username }}"
-    password: "{{ container_registry_password }}"
-    validate_certs: false
+# - name: "DOWNLOAD: OpenShift client (oc)"
+#   ansible.builtin.get_url:
+#     url: "{{ openshift_client_url }}"
+#     dest: "{{ base_dir }}downloads/openshift-client-{{ openshift_version }}.tar.gz"
+#     mode: '0644'
+#     username: "{{ container_registry_username }}"
+#     password: "{{ container_registry_password }}"
+#     validate_certs: false
 
-- name: "UNARCHIVE: Check if OpenShift client is already extracted"
-  ansible.builtin.stat:
-    path: "{{ base_dir }}downloads/oc"
-  register: client_extracted
+# - name: "UNARCHIVE: Check if OpenShift client is already extracted"
+#   ansible.builtin.stat:
+#     path: "{{ base_dir }}downloads/oc"
+#   register: client_extracted
 
-- name: "UNARCHIVE: Extract OpenShift client"
-  ansible.builtin.unarchive:
-    src: "{{ base_dir }}downloads/openshift-client-{{ openshift_version }}.tar.gz"
-    dest: "{{ base_dir }}downloads/"
-    remote_src: true
-  when: not client_extracted.stat.exists
+# - name: "UNARCHIVE: Extract OpenShift client"
+#   ansible.builtin.unarchive:
+#     src: "{{ base_dir }}downloads/openshift-client-{{ openshift_version }}.tar.gz"
+#     dest: "{{ base_dir }}downloads/"
+#     remote_src: true
+#   when: not client_extracted.stat.exists
 
-# Copy oc, openshift-install to /usr/local/bin
-- name: "Copy and set executable permissions for OpenShift binaries"
-  ansible.builtin.copy:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    mode: '0755'
-    owner: root
-    group: root
-    remote_src: yes
-  with_items:
-    - { src: '/opt/sva/downloads/oc', dest: '/usr/local/bin/oc' }
-    - { src: '/opt/sva/downloads/openshift-install', dest: '/usr/local/bin/openshift-install' }
+# # Copy oc, openshift-install to /usr/local/bin
+# - name: "Copy and set executable permissions for OpenShift binaries"
+#   ansible.builtin.copy:
+#     src: "{{ item.src }}"
+#     dest: "{{ item.dest }}"
+#     mode: '0755'
+#     owner: root
+#     group: root
+#     remote_src: yes
+#   with_items:
+#     - { src: '/opt/sva/downloads/oc', dest: '/usr/local/bin/oc' }
+#     - { src: '/opt/sva/downloads/openshift-install', dest: '/usr/local/bin/openshift-install' }
 
 
 
@@ -189,20 +189,20 @@
 # wget https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz
 # tar xf govc_Linux_x86_64.tar.gz 
 # mv govc /usr/local/bin/
-- name: "DOWNLOAD: GOVC-Client (govc)"
-  ansible.builtin.get_url:
-    url: "{{ govc_download_link }}"
-    dest: "{{ base_dir }}downloads/govc_Linux_x86_64.tar.gz"
-    mode: '0644'
-    username: "{{ container_registry_username }}"
-    password: "{{ container_registry_password }}"
-    validate_certs: false
+# - name: "DOWNLOAD: GOVC-Client (govc)"
+#   ansible.builtin.get_url:
+#     url: "{{ govc_download_link }}"
+#     dest: "{{ base_dir }}downloads/govc_Linux_x86_64.tar.gz"
+#     mode: '0644'
+#     username: "{{ container_registry_username }}"
+#     password: "{{ container_registry_password }}"
+#     validate_certs: false
 
-- name: "UNARCHIVE: Extract GOVC-Tar-File (govc)"
-  ansible.builtin.unarchive:
-    src: "{{ base_dir }}downloads/govc_Linux_x86_64.tar.gz"
-    dest: "{{ base_dir }}downloads/"
-    remote_src: true
+# - name: "UNARCHIVE: Extract GOVC-Tar-File (govc)"
+#   ansible.builtin.unarchive:
+#     src: "{{ base_dir }}downloads/govc_Linux_x86_64.tar.gz"
+#     dest: "{{ base_dir }}downloads/"
+#     remote_src: true
 
 # - name: "ENVIRONMENT: Source OpenShift path script"
 #   ansible.builtin.shell: source /etc/profile.d/openshift_path.sh

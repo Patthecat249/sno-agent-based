@@ -5,6 +5,27 @@ FROM rockylinux:9.3
 LABEL maintainer="Patrick Jahn"
 LABEL description="Container mit den für SNO-Installation erforderlichen Paketen"
 
+# Set environment variables
+ENV REGISTRY_URL=artifactory.home.local \
+    REGISTRY_URL_WITH_PORT=artifactory.home.local:443 \
+    REGISTRY_USERNAME=admin \
+    REGISTRY_PASSWORD='Test1234!' \
+    BASE_DIR=/opt/sva/downloads \
+    OPENSHIFT_VERSION=4.16.24
+
+# The next Vars must be defined separatly because Containerfile cannot concatenate different vars in one ENV-Call
+ENV OPENSHIFT_INSTALLER_URL=https://${REGISTRY_URL}:443/artifactory/generic/pub/openshift-v4/x86_64/clients/ocp/${OPENSHIFT_VERSION}/openshift-install-linux-${OPENSHIFT_VERSION}.tar.gz \
+    OPENSHIFT_CLIENT_URL=https://${REGISTRY_URL}:443/artifactory/generic/pub/openshift-v4/x86_64/clients/ocp/${OPENSHIFT_VERSION}/openshift-client-linux-${OPENSHIFT_VERSION}.tar.gz
+
+# Set environment variables for GOVC
+ENV GOVC_DOWNLOAD_LINK=https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz
+
+# Create directories for downloads
+RUN mkdir -p ${BASE_DIR}
+
+# Add RootCA-Certificates in truststore
+RUN openssl s_client -showcerts -servername ${REGISTRY_URL} -connect ${REGISTRY_URL}:443 </dev/null 2>/dev/null | awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/' > /etc/pki/ca-trust/source/anchors/registry-root-ca.crt
+
 # System aktualisieren und erforderliche Pakete installieren
 RUN yum -y update && \
     yum -y install \
@@ -23,12 +44,50 @@ RUN yum -y update && \
         && \
     yum clean all
 
-# Install pyvmomi for access to vcenter with govc
+# Install pyvmomi for access to vcenter with govc and ansible-collection to use ansible-vmware-modules
 RUN pip3 install pyvmomi requests
 RUN ansible-galaxy collection install community.vmware
 
 # Download und Installation GOVC
 # oc und openshift-install werden dynamisch nachgeladen beim Ansible-Playbook.
+
+
+# Download the OpenShift installer
+RUN wget -q --user=${REGISTRY_USERNAME} --password=${REGISTRY_PASSWORD} ${OPENSHIFT_INSTALLER_URL} -O ${BASE_DIR}/openshift-install-${OPENSHIFT_VERSION}.tar.gz
+
+# Extract the OpenShift installer
+RUN tar -xvf ${BASE_DIR}/openshift-install-${OPENSHIFT_VERSION}.tar.gz -C ${BASE_DIR} && \
+    chmod +x ${BASE_DIR}/openshift-install && \
+    mv ${BASE_DIR}/openshift-install /usr/local/bin/openshift-install
+
+# Download the OpenShift client
+RUN wget -q --user=${REGISTRY_USERNAME} --password=${REGISTRY_PASSWORD} ${OPENSHIFT_CLIENT_URL} -O ${BASE_DIR}/openshift-client-${OPENSHIFT_VERSION}.tar.gz
+
+# Extract the OpenShift client
+RUN tar -xvf ${BASE_DIR}/openshift-client-${OPENSHIFT_VERSION}.tar.gz -C ${BASE_DIR} && \
+    chmod +x ${BASE_DIR}/oc && \
+    mv ${BASE_DIR}/oc /usr/local/bin/oc
+
+# Validate binaries
+RUN /usr/local/bin/openshift-install version && \
+    /usr/local/bin/oc version
+
+
+
+# Download the GOVC tar.gz file
+RUN wget -q ${GOVC_DOWNLOAD_LINK} -O ${BASE_DIR}/govc_Linux_x86_64.tar.gz
+
+# Extract the GOVC tar.gz file
+RUN tar -xf ${BASE_DIR}/govc_Linux_x86_64.tar.gz -C ${BASE_DIR} && \
+    mv ${BASE_DIR}/govc /usr/local/bin/ && \
+    chmod +x /usr/local/bin/govc
+
+# Verify the installation
+RUN govc version
+
+
+# Default command
+CMD ["/bin/bash"]
 
 
 # Erzeuge ein File für das pull-secret von Red Hat im Home-Verzeichnis des Users
