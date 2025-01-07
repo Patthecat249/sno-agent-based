@@ -65,7 +65,7 @@ RUN mkdir -p ${DIR_CERTS} && \
     unzip -q ${DIR_DOWNLOADS}download.zip -d ${DIR_CERTS}
 
 # Step 3: Copy Root Certificates to system trust store
-RUN cp -r ${DIR_CERTS}* /etc/pki/ca-trust/source/anchors/ && \
+RUN cp -r ${DIR_CERTS}/lin/* /etc/pki/ca-trust/source/anchors/ && \
     chmod 0644 /etc/pki/ca-trust/source/anchors/*
 
 # Step 4: Refresh the system trust store
