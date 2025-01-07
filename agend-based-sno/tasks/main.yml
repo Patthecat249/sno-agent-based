@@ -1,33 +1,5 @@
 # tasks file for agend-based-sno
 ---
-# - name: "SOFTWARE: Install some necessary tools"
-#   ansible.builtin.yum:
-#     name:
-#       - tar
-#       - wget
-#       - jq
-#       - podman
-#       - python3
-#       - nmstate
-#     state: present
-
-# - name: "SOFTWARE: Install python3-pip"
-#   ansible.builtin.package:
-#     name: python3-pip
-#     state: present
-
-# - name: "SOFTWARE: Install pyvmomi via pip3"
-#   ansible.builtin.pip:
-#     name: pyvmomi
-#     state: present
-#     executable: pip3
-
-# - name: "SOFTWARE: Install requests via pip3"
-#   ansible.builtin.pip:
-#     name: requests
-#     state: present
-#     executable: pip3
-
 # Everything for a clean installation of the same cluster
 - name: "CLEAN: Clean Cluster directories for a fresh installation"
   ansible.builtin.file:
@@ -59,14 +31,6 @@
     - "{{ cluster_dir }}"
     - "{{ network_dir }}"
     - "/root/.cache/agent/image_cache/"
-
-# # BEGIN Templating the network-files for ISO-Customize
-# # Template lan.nmconnection.j2
-# - name: "COREOS-INSTALLER: Template the ens33.nmconnection.j2"
-#   ansible.builtin.template:
-#     src: ens33.nmconnection.j2
-#     dest: "{{ network_dir }}ens33.nmconnection"
-#     mode: '0644'
 
 - name: "ENVIRONMENT: Create SSH directory if it does not exist"
   ansible.builtin.file:
@@ -112,103 +76,6 @@
       - "Bitte prüfe, ob Nginx und Artifactory laufen"
   when: artifactory_response.status not in [200, 502, 503]
 
-
-
-# - name: "DOWNLOAD: OpenShift installer (openshift-install) from Artifactory"
-#   ansible.builtin.get_url:
-#     url: "{{ openshift_installer_url }}"
-#     dest: "{{ base_dir }}downloads/openshift-install-{{ openshift_version }}.tar.gz"
-#     mode: '0644'
-#     username: "{{ container_registry_username }}"
-#     password: "{{ container_registry_password }}"
-#     validate_certs: false
-
-# - name: "UNARCHIVE: Check if OpenShift installer is already extracted"
-#   ansible.builtin.stat:
-#     path: "{{ base_dir }}downloads/openshift-install-{{ openshift_version }}"
-#   register: installer_extracted
-
-# - name: "UNARCHIVE: Extract OpenShift installer (openshift-install)"
-#   ansible.builtin.unarchive:
-#     src: "{{ base_dir }}downloads/openshift-install-{{ openshift_version }}.tar.gz"
-#     dest: "{{ base_dir }}downloads/"
-#     remote_src: true
-#   when: not installer_extracted.stat.exists
-
-# - name: "DOWNLOAD: OpenShift client (oc)"
-#   ansible.builtin.get_url:
-#     url: "{{ openshift_client_url }}"
-#     dest: "{{ base_dir }}downloads/openshift-client-{{ openshift_version }}.tar.gz"
-#     mode: '0644'
-#     username: "{{ container_registry_username }}"
-#     password: "{{ container_registry_password }}"
-#     validate_certs: false
-
-# - name: "UNARCHIVE: Check if OpenShift client is already extracted"
-#   ansible.builtin.stat:
-#     path: "{{ base_dir }}downloads/oc"
-#   register: client_extracted
-
-# - name: "UNARCHIVE: Extract OpenShift client"
-#   ansible.builtin.unarchive:
-#     src: "{{ base_dir }}downloads/openshift-client-{{ openshift_version }}.tar.gz"
-#     dest: "{{ base_dir }}downloads/"
-#     remote_src: true
-#   when: not client_extracted.stat.exists
-
-# # Copy oc, openshift-install to /usr/local/bin
-# - name: "Copy and set executable permissions for OpenShift binaries"
-#   ansible.builtin.copy:
-#     src: "{{ item.src }}"
-#     dest: "{{ item.dest }}"
-#     mode: '0755'
-#     owner: root
-#     group: root
-#     remote_src: yes
-#   with_items:
-#     - { src: '/opt/sva/downloads/oc', dest: '/usr/local/bin/oc' }
-#     - { src: '/opt/sva/downloads/openshift-install', dest: '/usr/local/bin/openshift-install' }
-
-
-
-# - name: "ENVIRONMENT: Add OpenShift binaries to PATH"
-#   ansible.builtin.lineinfile:
-#     # path: /etc/profile.d/openshift_path.sh
-#     path: "~/.bashrc"
-#     line: 'export PATH=$PATH:{{ base_dir }}downloads'
-#     create: true
-#     mode: '0644'
-
-# - name: "SOURCE: Aktivieren der PATH-Änderung"
-#   # shell: "source /etc/profile.d/openshift_path.sh"
-#   shell: "source ~/.bashrc"
-#   args:
-#     executable: /bin/bash
-
-# Install GOVC on Bastion-Host
-# wget https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz
-# tar xf govc_Linux_x86_64.tar.gz 
-# mv govc /usr/local/bin/
-# - name: "DOWNLOAD: GOVC-Client (govc)"
-#   ansible.builtin.get_url:
-#     url: "{{ govc_download_link }}"
-#     dest: "{{ base_dir }}downloads/govc_Linux_x86_64.tar.gz"
-#     mode: '0644'
-#     username: "{{ container_registry_username }}"
-#     password: "{{ container_registry_password }}"
-#     validate_certs: false
-
-# - name: "UNARCHIVE: Extract GOVC-Tar-File (govc)"
-#   ansible.builtin.unarchive:
-#     src: "{{ base_dir }}downloads/govc_Linux_x86_64.tar.gz"
-#     dest: "{{ base_dir }}downloads/"
-#     remote_src: true
-
-# - name: "ENVIRONMENT: Source OpenShift path script"
-#   ansible.builtin.shell: source /etc/profile.d/openshift_path.sh
-#   args:
-#     executable: /bin/bash
-
 - name: "SSH-KEYS: Generate SSH key if not exists"
   ansible.builtin.command:
     cmd: "ssh-keygen -f {{ ssh_key_dir }}/id_rsa_{{ cluster_name }} -N ''"
@@ -249,12 +116,6 @@
     dest: "{{ cluster_dir }}/agent-config.yaml"
     mode: '0644'
 
-# - name: "OPENSHIFT: Template butane.yaml in cluster directory"
-#   ansible.builtin.template:
-#     src: butane.conf.j2
-#     dest: "{{ cluster_dir }}/butane.yaml"
-#     mode: '0644'
-
 # Backup -install-config.yaml
 - name: "OPENSHIFT: Make a copy of install-config.yaml to shared directory (install-config-{{ cluster_name }}.yaml)"
   ansible.builtin.template:
@@ -268,45 +129,6 @@
     dest: "{{ base_dir }}/sno-clusters/agent-config-{{ cluster_name }}.yaml"
     mode: '0644'
 
-# - name: "OPENSHIFT: Make a copy of butane.yaml to shared directory (butane-{{ cluster_name }}.yaml)"
-#   ansible.builtin.template:
-#     src: "butane.conf.j2"
-#     dest: "{{ base_dir }}/sno-clusters/butane-{{ cluster_name }}.yaml"
-#     mode: '0644'
-
-# - name: "OPENSHIFT: Retrieve URL for rhcos-live.iso"
-#   ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install coreos print-stream-json | grep location | grep {{ arch }} | grep iso | cut -d'\"' -f4"
-#   register: iso_output
-
-# - name: "OPENSHIFT: Set URL fact for rhcos-live.iso"
-#   ansible.builtin.set_fact:
-#     iso_url: "{{ iso_output.stdout }}"
-#   when: iso_output.stdout is defined and iso_output.stdout != ""
-
-
-# # Muss hier abgelegt werden. 
-# # /root/.cache/agent/image_cache/coreos-x86_64.iso
-# - name: "DOWNLOAD: rhcos-live.iso from Red Hat"
-#   ansible.builtin.get_url:
-#     url: "{{ iso_url }}"
-#     dest: "{{ base_dir }}/downloads/rhcos-live.iso"   # /root/.cache/agent/image_cache/coreos-x86_64.iso
-#     mode: '0644'
-#   when: iso_url is defined
-
-# - name: "DOWNLOAD: rhcos-live.iso from Artifactory to cache-directory"
-#   ansible.builtin.get_url:
-#     url: "{{ url_coreos_iso_in_artifactory }}"   # https://artifactory.home.local:443/artifactory/generic/pub/openshift-v4/x86_64/dependencies/rhcos/4.16/4.16.3/rhcos-4.16.3-x86_64-live.x86_64.iso
-#     dest: "/root/.cache/agent/image_cache/rhcos-416.94.202410211619-0-live.x86_64.iso"   # /root/.cache/agent/image_cache/coreos-x86_64.iso
-#     mode: '0644'
-#     username: "{{ container_registry_username }}"
-#     password: "{{ container_registry_password }}"
-#     validate_certs: false
-
-
-# Execute: openshift-install agent create image
-# openshift-install --dir <install_directory> agent create image
-# - name: "OPENSHIFT-INSTALL: Create Agent-Based-ISO"
-#   ansible.builtin.shell: "{{ base_dir }}downloads/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create image"
 
 # Generate Zero-Touch-Provisioning YAML to cluster-dir
 # openshift-install agent create cluster-manifests --dir <installation_directory>
@@ -329,39 +151,6 @@
   environment:
     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads"
     # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/openshift-install:{{ base_dir }}downloads/oc"
-
-
-
-
-# Create the ignition-file 
-# - name: "OPENSHIFT-INSTALL: Create single-node-ignition-config"
-#   ansible.builtin.shell: "{{ base_dir }}/downloads/openshift-install --dir={{ base_dir }}/sno-clusters/{{ cluster_name }} create single-node-ignition-config"
-
-
-# Embed the ignition file
-# - name: "COREOS-INSTALLER: Embed Ignition file into RHCOS ISO using coreos-installer"
-#   ansible.builtin.command: >
-#     podman run --privileged --pull always --rm
-#     -v /dev:/dev
-#     -v /run/udev:/run/udev
-#     -v {{ base_dir }}:/data
-#     -w /data
-#     quay.io/coreos/coreos-installer:release
-#     iso ignition embed -fi sno-clusters/{{ cluster_name}}/{{ ignition_file }} downloads/{{ iso_file }} -o downloads/{{ cluster_name }}.iso
-#   args:
-#     chdir: "{{ cluster_dir }}"
-
-
-
-# BEGIN: INSERT BUTANE HOSTNAME and NETWORKCONFIGURATION to {{ base_dir }}/sno-clusters/
-# - name: "COREOS-INSTALLER: Embed network-config using iso customize with coreos-installer"
-#   ansible.builtin.command: >
-#     podman run --privileged --rm -v {{ base_dir }}:/data -w /data quay.io/coreos/coreos-installer:release iso customize -f --dest-device /dev/sda --network-keyfile ./network-configs/{{ cluster_name }}/lan.nmconnection downloads/{{ cluster_name }}-temp.iso -o downloads/{{ cluster_name }}.iso
-#   args:
-#     chdir: "{{ cluster_dir }}"
-
-
-# END: INSERT BUTANE HOSTNAME and NETWORKCONFIGURATION to {{ base_dir }}/sno-clusters/
 
 # Download -Zertifate vom vCenter
 - name: "BASTION: Download vCenter-Root-Certificates to Bastion-Host"
