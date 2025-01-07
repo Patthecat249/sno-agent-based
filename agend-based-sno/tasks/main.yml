@@ -39,7 +39,7 @@
     - "{{ network_dir}}"
 
 # Remove ISO-File if exists, because of a new fresh installation
-- name: "CLEAN: Delete the iso-file /opt/sva/downloads/sno2.iso"
+- name: "CLEAN: Delete the iso-file"
   ansible.builtin.file:
     path: "{{ dir_downloads }}{{ cluster_name }}.iso"
     state: absent
@@ -521,7 +521,7 @@
   debug:
     msg:
       - "Bitte vergiss nicht deinen DNS-Server zu konfigurieren!"
-      - "## SNO2"
+      - "## {{ cluster_name }}"
       - "address=/.apps.{{ cluster_name }}.home.local/{{ ip_address }}"
       - "address=/api-int.{{ cluster_name }}.home.local/{{ ip_address }}"
       - "address=/api.{{ cluster_name }}.home.local/{{ ip_address }}"
