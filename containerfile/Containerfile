@@ -72,7 +72,7 @@ RUN cp -r ${DIR_CERTS}/lin/* /etc/pki/ca-trust/source/anchors/ && \
 RUN update-ca-trust
 
 # Clean up temporary files
-RUN rm -rf ${DIR_DOWNLOADS}download.zip ${DIR_CERTS}
+# RUN rm -rf ${DIR_DOWNLOADS}download.zip ${DIR_CERTS}
 
 # Download und Installation GOVC
 # oc und openshift-install werden dynamisch nachgeladen beim Ansible-Playbook.
