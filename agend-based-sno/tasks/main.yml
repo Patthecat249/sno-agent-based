@@ -335,11 +335,11 @@
         controller_number: 0
         unit_number: 1
         state: present
-        type: iso
+        type: client
         # content_library: "{{ content_library_name }}"
         # library_iso: "{{ cluster_name }}.iso"
         # iso_path: "/{{ content_library_name }}/{{ cluster_name }}.iso"
-        iso_path: "[contentLib] /iso-library/sno1.iso"
+        # iso_path: "[contentLib] /iso-library/sno1.iso"
     networks:
     - name: "{{ network_name }}"
       device_type: vmxnet3
