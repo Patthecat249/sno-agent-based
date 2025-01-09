@@ -7,20 +7,13 @@ hosts:
   - hostname: {{ cluster_name }}
     interfaces:
       - name: {{ network_interface_name_of_vm }}
-        {# macAddress: {{ mac_address }} #}
-          {% if mac_address | default(false) -%}
-          macAddress: {{ mac_address }} 
-{%- endif %}
-
+        macAddress: {{ mac_address }} 
     networkConfig:
       interfaces:
         - name: {{ network_interface_name_of_vm }}
           type: ethernet
           state: up
-          {% if mac_address | default(false) -%}
-          mac-address: {{ mac_address }} 
-{%- endif %}
-
+          mac-address: {{ mac_address }}
           ipv4:
             enabled: true
             address:
