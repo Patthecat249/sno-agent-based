@@ -14,7 +14,7 @@ hosts:
           type: ethernet
           state: up
           {% if mac_address | default(false) -%}
-          macAddress: {{ mac_address }} 
+          mac-address: {{ mac_address }} 
 {%- endif %}
 
           ipv4:
