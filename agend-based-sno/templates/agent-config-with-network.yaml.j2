@@ -13,9 +13,9 @@ hosts:
         - name: {{ network_interface_name_of_vm }}
           type: ethernet
           state: up
-          {% if mac_address | default(false) %}
+          {% if mac_address | default(false) -%}
           mac-address: {{ mac_address }}
-          {% endif %}
+          {%- endif %}
           {# mac-address: {{ mac_address }} #}
           ipv4:
             enabled: true

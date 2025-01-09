@@ -101,6 +101,8 @@ ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /
 # Oder 
 ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.4" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12"
 ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.4" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno1" -e "ip_address=172.16.11.11" -e "mac_address=00:50:56:9c:49:8d" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
 ```
 
 # Optional Section
