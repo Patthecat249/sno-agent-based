@@ -335,10 +335,11 @@
         controller_number: 0
         unit_number: 1
         state: present
-        type: client
+        type: iso
         # content_library: "{{ content_library_name }}"
         # library_iso: "{{ cluster_name }}.iso"
         # iso_path: "/{{ content_library_name }}/{{ cluster_name }}.iso"
+        iso_path: "[contentLib] /iso-library/sno1.iso"
     networks:
     - name: "{{ network_name }}"
       device_type: vmxnet3
@@ -349,6 +350,11 @@
   register: deploy_vm
   # tags:
   #   - customattribut
+
+# INSERT ISO from Content Library
+# govc device.cdrom.insert -vm sno1 library:/iso-library/sno1.iso
+
+
 
 
 # Set advanced configuration parameters via GOVC
