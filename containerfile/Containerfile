@@ -18,7 +18,7 @@ ENV OPENSHIFT_INSTALLER_URL=https://${REGISTRY_URL}:443/artifactory/generic/pub/
     OPENSHIFT_CLIENT_URL=https://${REGISTRY_URL}:443/artifactory/generic/pub/openshift-v4/x86_64/clients/ocp/${OPENSHIFT_VERSION}/openshift-client-linux-${OPENSHIFT_VERSION}.tar.gz
 
 # Set environment variables for GOVC
-ENV GOVC_DOWNLOAD_LINK=https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz
+ENV GOVC_DOWNLOAD_LINK=https://github.com/vmware/govmomi/releases/download/v0.47.1/govc_Linux_x86_64.tar.gz
 
 # Set VMware variables
 ARG VCENTER_HOSTNAME='vcenter.home.local'
