@@ -2,6 +2,7 @@
 This Repository contains an ansible-role to install Single-Node-OpenShift with an Agend-Based-Installation approach.
 
 ## Architecture
+![Architekture of SNO-Workaround](images/sno-architecture.drawio2.svg)
 ![Architekture of SNO-Workaround](images/sno-architecture.drawio.svg)
 
 
