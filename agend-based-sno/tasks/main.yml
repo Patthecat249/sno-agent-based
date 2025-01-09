@@ -197,16 +197,16 @@
     force: true
   # delegate_to: localhost
 
-# WICHTIG: Das ISO-File darf nicht mehr in einer VM gemounted sein!!!
-- name: "VMWARE: Remove {{ cluster_name}}.iso on a datastore before uploading"
-  community.vmware.vsphere_file:
-    hostname: '{{ esx_host_hostname }}'
-    username: '{{ esx_host_username }}'
-    password: '{{ esx_host_password }}'
-    datacenter: ha-datacenter
-    datastore: local-ssd
-    path: sno/{{ cluster_name }}.iso
-    state: absent
+# # WICHTIG: Das ISO-File darf nicht mehr in einer VM gemounted sein!!!
+# - name: "VMWARE: Remove {{ cluster_name}}.iso on a datastore before uploading"
+#   community.vmware.vsphere_file:
+#     hostname: '{{ esx_host_hostname }}'
+#     username: '{{ esx_host_username }}'
+#     password: '{{ esx_host_password }}'
+#     datacenter: ha-datacenter
+#     datastore: local-ssd
+#     path: sno/{{ cluster_name }}.iso
+#     state: absent
 
 # # Upload to Datastore
 # - name: "VMWARE: Upload customized-sno ISO to VMware datastore via HTTPS"
@@ -225,7 +225,8 @@
 # govc library.upload -library="${LIBRARY_NAME}" "${ISO_PATH}"
 - name: "GOVC: Upload customized-sno ISO to VMware Content Library"
   # govc library.import /iso-library /opt/sva/sno-clusters/sno1/agent.x86_64.iso
-  ansible.builtin.shell: "govc library.import /{{ content_library_name }} {{ cluster_dir }}{{filename_agent_iso}}"
+  # govc library.import library_name/item_name file.ova # update existing item
+  ansible.builtin.shell: "govc library.import /{{ content_library_name }}/{{ cluster_name }}.iso {{ cluster_dir }}{{ filename_agent_iso }}"
   environment:
     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
     GOVC_USERNAME: "{{ vcenter_username }}"
