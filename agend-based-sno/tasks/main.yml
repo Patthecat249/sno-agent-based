@@ -338,9 +338,10 @@
         controller_number: 0
         unit_number: 1
         state: present
-        type: content_library
-        content_library: "{{ content_library_name }}"
-        library_iso: "{{ cluster_name }}.iso"
+        type: iso
+        # content_library: "{{ content_library_name }}"
+        # library_iso: "{{ cluster_name }}.iso"
+        iso_path: "/{{ content_library_name }}/{{ cluster_name }}.iso"
     networks:
     - name: "{{ network_name }}"
       device_type: vmxnet3
