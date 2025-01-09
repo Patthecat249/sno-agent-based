@@ -13,6 +13,7 @@ This Repository contains an ansible-role to install Single-Node-OpenShift with a
 - ansible
 - internet access from the management server
 - access to the vcenter to upload the created iso
+- mac-address 
 
 ## Getting started
 - Install your management System "sno-playground" from Template "manual-rocky94"

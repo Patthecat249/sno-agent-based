@@ -208,21 +208,79 @@
     path: sno/{{ cluster_name }}.iso
     state: absent
 
-- name: "VMWARE: Upload customized-sno ISO to VMware datastore via HTTPS"
-  ansible.builtin.uri:
-    url: "https://{{ esx_host_hostname }}/folder/sno/{{ cluster_name }}.iso?dcPath=ha-datacenter&dsName=local-ssd"
-    method: PUT
-    user: "{{ esx_host_username }}"
-    password: "{{ esx_host_password }}"
-    # sno2/agent.x86_64.iso
-    src: "{{ cluster_dir }}{{filename_agent_iso}}"
-    force_basic_auth: true
-    status_code: 201
-    remote_src: true
+# # Upload to Datastore
+# - name: "VMWARE: Upload customized-sno ISO to VMware datastore via HTTPS"
+#   ansible.builtin.uri:
+#     url: "https://{{ esx_host_hostname }}/folder/sno/{{ cluster_name }}.iso?dcPath=ha-datacenter&dsName=local-ssd"
+#     method: PUT
+#     user: "{{ esx_host_username }}"
+#     password: "{{ esx_host_password }}"
+#     # sno2/agent.x86_64.iso
+#     src: "{{ cluster_dir }}{{filename_agent_iso}}"
+#     force_basic_auth: true
+#     status_code: 201
+#     remote_src: true
+
+# Upload to Content Library
+# govc library.upload -library="${LIBRARY_NAME}" "${ISO_PATH}"
+- name: "GOVC: Upload customized-sno ISO to VMware Content Library"
+  ansible.builtin.shell: "govc library.upload -library={{ content_library_name }} {{ cluster_dir }}{{filename_agent_iso}}"
+  environment:
+    GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
+    GOVC_USERNAME: "{{ vcenter_username }}"
+    GOVC_PASSWORD: "{{ vcenter_password }}"
+    GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+  tags:
+    - customattribut
+
 
 # Erzeuge eine VM für SNO
 # !!!disk.EnableUUID=TRUE mit einbauen!!!
 
+## USING ISO-Datastore
+# - name: "VMWARE: Create the virtual machine for SNO"
+#   community.vmware.vmware_guest:
+#     hostname: "{{ vcenter_hostname }}"
+#     username: "{{ vcenter_username }}"
+#     password: "{{ vcenter_password }}"
+#     datacenter: "dc-home"
+#     folder: /dc-home/vm/openshift/
+#     name: "{{ cluster_name }}"
+#     state: powered-off
+#     guest_id: rhel9_64Guest
+#     # This is hostname of particular ESXi server on which user wants VM to be deployed
+#     # esxi_hostname: "{{ esxi_hostname }}"
+#     # customvalues:
+#     #   - key: disk.EnableUUID   # add the Advanced Configuration Parameter 
+#     #     value: TRUE
+#     disk:
+#     - size_gb: "{{ disk_size_gb }}"
+#       type: thin
+#       datastore: "{{ datastore }}"
+#     hardware:
+#       memory_mb: "{{ memory_mb }}"
+#       num_cpus: "{{ cpu_count }}"
+#     cdrom:
+#       - controller_type: sata
+#         controller_number: 0
+#         unit_number: 1
+#         state: present
+#         type: iso
+#         iso_path: "[local-ssd] sno/{{ cluster_name }}.iso"
+#     networks:
+#     - name: "{{ network_name }}"
+#       device_type: vmxnet3
+#       mac: "{{ mac_address }}"
+#     # wait_for_ip_address: true
+#     # wait_for_ip_address_timeout: 600
+#   # delegate_to: localhost
+#   register: deploy_vm
+#   # tags:
+#   #   - customattribut
+
+
+## USING Content Library
 - name: "VMWARE: Create the virtual machine for SNO"
   community.vmware.vmware_guest:
     hostname: "{{ vcenter_hostname }}"
@@ -250,8 +308,9 @@
         controller_number: 0
         unit_number: 1
         state: present
-        type: iso
-        iso_path: "[local-ssd] sno/{{ cluster_name }}.iso"
+        type: content_library
+        content_library: "iso-library"
+        library_iso: "{{ cluster_name }}.iso"
     networks:
     - name: "{{ network_name }}"
       device_type: vmxnet3
@@ -262,7 +321,6 @@
   register: deploy_vm
   # tags:
   #   - customattribut
-
 
 
 # Set advanced configuration parameters via GOVC

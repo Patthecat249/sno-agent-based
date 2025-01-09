@@ -32,6 +32,7 @@ disk_size_gb: 200
 # ignition_file: "{{ cluster_dir }}/bootstrap-in-place-for-live-iso.ign"
 ignition_file: "bootstrap-in-place-for-live-iso.ign"
 iso_file: "rhcos-live.iso"
+content_library_name: "iso-library"
 
 # Working directories always end with slashes
 base_dir: "/opt/sva/"
