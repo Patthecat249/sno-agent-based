@@ -221,12 +221,35 @@
 #     status_code: 201
 #     remote_src: true
 
+# Check if ISO exists in Content Library and then delete
+- name: Check if the ISO file exists in the Content Library
+  shell: |
+    govc library.ls /iso-library/sno1.iso || echo "not_exists"
+  environment:
+    GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
+    GOVC_USERNAME: "{{ vcenter_username }}"
+    GOVC_PASSWORD: "{{ vcenter_password }}"
+    GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+  register: iso_check
+  changed_when: false
+
+- name: Delete the ISO file if it exists
+  shell: govc library.rm /iso-library/sno1.iso
+  environment:
+    GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
+    GOVC_USERNAME: "{{ vcenter_username }}"
+    GOVC_PASSWORD: "{{ vcenter_password }}"
+    GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+  when: iso_check.stdout != "not_exists"
+  register: delete_result
+
 # Upload to Content Library
 # govc library.upload -library="${LIBRARY_NAME}" "${ISO_PATH}"
 - name: "GOVC: Upload customized-sno ISO to VMware Content Library"
-  # govc library.import /iso-library /opt/sva/sno-clusters/sno1/agent.x86_64.iso
-  # govc library.import library_name/item_name file.ova # update existing item
-  ansible.builtin.shell: "govc library.import /{{ content_library_name }}/{{ cluster_name }}.iso {{ cluster_dir }}{{ filename_agent_iso }}"
+  # govc library.import -n="sno1.iso" /iso-library /opt/sva/sno-clusters/sno1/agent.x86_64.iso
+  ansible.builtin.shell: "govc library.import -n={{ cluster_name }}.iso /{{ content_library_name }} {{ cluster_dir }}{{ filename_agent_iso }}"
   environment:
     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
     GOVC_USERNAME: "{{ vcenter_username }}"
