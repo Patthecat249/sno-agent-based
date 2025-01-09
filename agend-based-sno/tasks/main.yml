@@ -242,8 +242,13 @@
     GOVC_PASSWORD: "{{ vcenter_password }}"
     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
-  when: iso_check.stdout != "not_exists"
+  # when: iso_check.stdout != "not_exists"
+  when: "'/iso-library/sno1.iso' in iso_check.stdout"
   register: delete_result
+
+
+
+
 
 # Upload to Content Library
 # govc library.upload -library="${LIBRARY_NAME}" "${ISO_PATH}"
