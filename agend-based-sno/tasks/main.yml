@@ -139,10 +139,7 @@
     # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/openshift-install:{{ base_dir }}downloads/oc"
 
 
-# ### END THE PLAYBOOK HERE
-# - name: Stop the playbook here
-#   ansible.builtin.meta: end_play
-# ### END THE PLAYBOOK HERE
+
 
 # INSERT ZTP Yaml-Files to customize the SNO-Installation
 
@@ -338,10 +335,10 @@
         controller_number: 0
         unit_number: 1
         state: present
-        type: iso
+        type: client
         # content_library: "{{ content_library_name }}"
         # library_iso: "{{ cluster_name }}.iso"
-        iso_path: "/{{ content_library_name }}/{{ cluster_name }}.iso"
+        # iso_path: "/{{ content_library_name }}/{{ cluster_name }}.iso"
     networks:
     - name: "{{ network_name }}"
       device_type: vmxnet3
@@ -384,6 +381,11 @@
       - disk
       - cdrom
       - ethernet
+
+# ### END THE PLAYBOOK HERE
+- name: Stop the playbook here
+  ansible.builtin.meta: end_play
+# ### END THE PLAYBOOK HERE
 
 - name: Set the state of a virtual machine to poweron
   community.vmware.vmware_guest_powerstate:
