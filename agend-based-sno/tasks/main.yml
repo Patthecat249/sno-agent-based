@@ -224,7 +224,8 @@
 # Upload to Content Library
 # govc library.upload -library="${LIBRARY_NAME}" "${ISO_PATH}"
 - name: "GOVC: Upload customized-sno ISO to VMware Content Library"
-  ansible.builtin.shell: "govc library.upload -library={{ content_library_name }} {{ cluster_dir }}{{filename_agent_iso}}"
+  # govc library.import /iso-library /opt/sva/sno-clusters/sno1/agent.x86_64.iso
+  ansible.builtin.shell: "govc library.import /{{ content_library_name }} {{ cluster_dir }}{{filename_agent_iso}}"
   environment:
     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
     GOVC_USERNAME: "{{ vcenter_username }}"
@@ -309,7 +310,7 @@
         unit_number: 1
         state: present
         type: content_library
-        content_library: "iso-library"
+        content_library: "{{ content_library_name }}"
         library_iso: "{{ cluster_name }}.iso"
     networks:
     - name: "{{ network_name }}"
