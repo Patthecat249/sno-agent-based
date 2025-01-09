@@ -15,7 +15,8 @@ hosts:
           state: up
           {% if mac_address | default(false) -%}
           mac-address: {{ mac_address }}
-          {% endif %}
+          {%- endif %}
+
           {# mac-address: {{ mac_address }} #}
           ipv4:
             enabled: true
