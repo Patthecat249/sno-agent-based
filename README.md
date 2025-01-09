@@ -3,8 +3,9 @@ This Repository contains an ansible-role to install Single-Node-OpenShift with a
 
 ## Architecture
 ![Architekture of SNO-Workaround](images/sno-architecture.drawio2.svg)
-![Architekture of SNO-Workaround](images/sno-architecture.drawio3.svg)
 
+## How it works!
+![Architekture of SNO-Workaround](images/sno-architecture.drawio3.svg)
 
 
 ## Requirements
