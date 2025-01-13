@@ -339,6 +339,7 @@
         # content_library: "{{ content_library_name }}"
         # library_iso: "{{ cluster_name }}.iso"
         # iso_path: "/{{ content_library_name }}/{{ cluster_name }}.iso"
+        iso_path: "[esx-datengrab] contentlib-caa1a910-0893-4e7d-8e11-80ea544cbed3/fef468a5-c07b-4f09-9fcb-c8399d07f7a3/agent.x86_64_2e0cbdb5-7c42-4765-8b41-78464ab56eb1.iso"
         # iso_path: "[contentLib] /iso-library/sno1.iso"
     networks:
     - name: "{{ network_name }}"
