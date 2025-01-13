@@ -339,7 +339,8 @@
         # content_library: "{{ content_library_name }}"
         # library_iso: "{{ cluster_name }}.iso"
         # iso_path: "/{{ content_library_name }}/{{ cluster_name }}.iso"
-        iso_path: "[esx-datengrab] contentlib-caa1a910-0893-4e7d-8e11-80ea544cbed3/fef468a5-c07b-4f09-9fcb-c8399d07f7a3/agent.x86_64_2e0cbdb5-7c42-4765-8b41-78464ab56eb1.iso"
+        # iso_path: "[esx-datengrab] contentlib-caa1a910-0893-4e7d-8e11-80ea544cbed3/fef468a5-c07b-4f09-9fcb-c8399d07f7a3/agent.x86_64_2e0cbdb5-7c42-4765-8b41-78464ab56eb1.iso"
+        iso_path: "[esx-datengrab] contentlib-caa1a910-0893-4e7d-8e11-80ea544cbed3/c10f2c3c-d71a-47ba-9149-ff5c89b17714/agent.x86_64_a2bb8826-bc8e-4e5e-a66f-e1c3c2d86e09.iso"
         # iso_path: "[contentLib] /iso-library/sno1.iso"
     networks:
     - name: "{{ network_name }}"
