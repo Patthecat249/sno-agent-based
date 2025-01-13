@@ -355,16 +355,16 @@
 
 # INSERT ISO from Content Library
 # govc device.cdrom.insert -vm sno1 library:/iso-library/sno1.iso
-- name: "GOVC: INSERT ISO from Content Library"
-  ansible.builtin.shell: "govc device.cdrom.insert -vm {{ cluster_name }} library:/{{ content_library_name }}/{{ cluster_name }}.iso"
-  environment:
-    GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
-    GOVC_USERNAME: "{{ vcenter_username }}"
-    GOVC_PASSWORD: "{{ vcenter_password }}"
-    GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
-  tags:
-    - customattribut
+# - name: "GOVC: INSERT ISO from Content Library"
+#   ansible.builtin.shell: "govc device.cdrom.insert -vm {{ cluster_name }} library:/{{ content_library_name }}/{{ cluster_name }}.iso"
+#   environment:
+#     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
+#     GOVC_USERNAME: "{{ vcenter_username }}"
+#     GOVC_PASSWORD: "{{ vcenter_password }}"
+#     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
+#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+#   tags:
+#     - customattribut
 
 
 # Set advanced configuration parameters via GOVC
