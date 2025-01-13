@@ -335,7 +335,7 @@
         controller_number: 0
         unit_number: 1
         state: present
-        type: client
+        type: iso
         # content_library: "{{ content_library_name }}"
         # library_iso: "{{ cluster_name }}.iso"
         # iso_path: "/{{ content_library_name }}/{{ cluster_name }}.iso"
