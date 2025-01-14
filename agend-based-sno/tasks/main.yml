@@ -456,19 +456,19 @@
     content_library_datastore: "esx-datengrab"
   run_once: yes
 
-# - name: Save all ISO paths in the datastore of the content library
-#   set_fact:
-#     all_iso_paths_in_content_library_datastore: "{{ all_iso_paths_in_content_library_datastore|default({})|combine({hn:iso_path_in_cl_datastore}) }}"
-#   vars:
-#     content_library_id: "{{ content_library_id_res.json.value[0] }}"
-#     content_library_item_id: "{{ content_library_item_id_res.json.value }}"
-#     update_session_id: "{{ update_session_id_res.json.value }}"
-#     iso_path_in_cl_datastore: "contentlib-{{ content_library_id }}/{{ content_library_item_id }}/{{ hn }}-rhel-{{ ver }}-x86_64-boot_{{ update_session_id.split(':')[0] }}.iso"
+- name: Save all ISO paths in the datastore of the content library
+  set_fact:
+    all_iso_paths_in_content_library_datastore: "{{ all_iso_paths_in_content_library_datastore|default({})|combine({hn:iso_path_in_cl_datastore}) }}"
+  vars:
+    content_library_id: "{{ content_library_id_res.json.value[0] }}"
+    content_library_item_id: "{{ content_library_item_id_res.json.value }}"
+    update_session_id: "{{ update_session_id_res.json.value }}"
+    iso_path_in_cl_datastore: "contentlib-{{ content_library_id }}/{{ content_library_item_id }}/{{ cluster_name }}_{{ update_session_id.split(':')[0] }}.iso"
 
-# - name: Save all content library item IDs
-#   set_fact:
-#     all_content_library_item_ids: "{{ all_content_library_item_ids|default({})|combine({hn:content_library_item_id}) }}"
-#   vars:
+- name: Save all content library item IDs
+  set_fact:
+    all_content_library_item_ids: "{{ all_content_library_item_ids|default({})|combine({hn:content_library_item_id}) }}"
+  vars:
 #     content_library_item_id: "{{ content_library_item_id_res.json.value }}"
 
 
