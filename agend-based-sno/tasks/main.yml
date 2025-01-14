@@ -467,7 +467,7 @@
 
 - name: Save all content library item IDs
   set_fact:
-    all_content_library_item_ids: "{{ all_content_library_item_ids|default({})|combine({hn:content_library_item_id}) }}"
+    all_content_library_item_ids: "{{ all_content_library_item_ids|default({})|combine({cluster_name:content_library_item_id}) }}"
   vars:
     content_library_item_id: "{{ content_library_item_id_res.json.value }}"
 
