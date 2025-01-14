@@ -33,9 +33,11 @@ mkdir -p $MYPATH/git && cd $MYPATH/git && git clone https://github.com/Patthecat
 ```
 
 # How to build the Container
-bash```
+```bash
 # Containerfile muss vorher gebaut werden!
 ```
+
+
 ## Build the snohelper-Container with the Containerfile
 
 ```bash
@@ -97,13 +99,40 @@ ansible-playbook install-sno.yaml --vault-password-file /opt/sva/credentials/pas
 
 ### Im Container ausführen
 cd /workspace
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
 
-# Oder 
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.4" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12"
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.4" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+# SNO1
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno1" -e "ip_address=172.16.11.11" -e "mac_address=00:50:56:9c:49:8a" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
 
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno1" -e "ip_address=172.16.11.11" -e "mac_address=00:50:56:9c:49:8d" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+# SNO2
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno2" -e "ip_address=172.16.11.12" -e "mac_address=00:50:56:9c:49:8b" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+
+# SNO3
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno3" -e "ip_address=172.16.11.13" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+
+# SNO4
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.14" -e "mac_address=00:50:56:9c:49:8d" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+```
+
+### Überprüfen des Installationsstatus der SNO-Cluster
+```bash
+# SNO1
+openshift-install agent wait-for bootstrap-complete --dir=/opt/sva/sno-clusters/sno1
+openshift-install agent wait-for install-complete --dir=/opt/sva/sno-clusters/sno1
+export KUBECONFIG=/opt/sva/sno-clusters/sno1/auth/kubeconfig
+oc whoami --show-console
+
+# SNO2
+openshift-install agent wait-for bootstrap-complete --dir=/opt/sva/sno-clusters/sno2
+openshift-install agent wait-for install-complete --dir=/opt/sva/sno-clusters/sno2
+
+# SNO3
+openshift-install agent wait-for bootstrap-complete --dir=/opt/sva/sno-clusters/sno3
+openshift-install agent wait-for install-complete --dir=/opt/sva/sno-clusters/sno3
+
+# SNO4
+openshift-install agent wait-for bootstrap-complete --dir=/opt/sva/sno-clusters/sno4
+openshift-install agent wait-for install-complete --dir=/opt/sva/sno-clusters/sno4
+
 ```
 
 # Optional Section
