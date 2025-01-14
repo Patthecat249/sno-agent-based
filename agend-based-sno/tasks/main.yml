@@ -262,6 +262,227 @@
 #     - customattribut
 
 
+
+
+
+## Authorization for vmware Rest API
+- name: Create a session using username and password
+  uri:
+    url: "https://{{ vcenter_hostname }}/rest/com/vmware/cis/session"
+    method: POST
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      Authorization: "Basic {{ (vcenter_username+':'+vcenter_password) | b64encode }}"
+    status_code: 200
+    return_content: yes
+  register: session_id_res
+  # no_log: yes
+  run_once: yes
+
+- name: Save the session ID
+  set_fact:
+    session_id: "{{ session_id_res.json.value }}"
+  run_once: yes
+
+## Get ID of the content library on the corresponding vmware server
+- name: Get ID of Content Library
+  uri:
+    url: "https://{{ vcenter_hostname }}/rest/com/vmware/content/library?~action=find"
+    method: POST
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      vmware-api-session-id: "{{ session_id }}"
+    body_format: json
+    body:
+      spec:
+        name: "iso-library"
+        type: LOCAL
+    status_code: 200
+    return_content: yes
+  register: content_library_id_res
+
+# - name: Save the ID of the corresponding content library
+#   set_fact:
+#     content_library_id: "{{ content_library_id_res.json.value[0] }}"
+
+- name: Get the ID of the old item with the same name
+  uri:
+    url: "https://{{ vcenter_hostname }}/rest/com/vmware/content/library/item?~action=find"
+    method: POST
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      vmware-api-session-id: "{{ session_id }}"
+    body_format: json
+    body:
+      spec:
+        name: "{{ cluster_name }}.iso"
+        library_id: "{{ content_library_id }}"
+    status_code: 200
+    return_content: yes
+  register: old_item_id_res
+  vars:
+    content_library_id: "{{ content_library_id_res.json.value[0] }}"
+
+- name: Remove the old item with the same name from the content library
+  uri:
+    url: "https://{{ vcenter_hostname }}/rest/com/vmware/content/library/item/id:{{ old_item_id_res.json.value[0] }}"
+    method: DELETE
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      vmware-api-session-id: "{{ session_id }}"
+    status_code: 200
+    return_content: yes
+  when: old_item_id_res.json.value[0] is defined
+
+- name: Create an item in the content library
+  uri:
+    url: "https://{{ vcenter_hostname }}/rest/com/vmware/content/library/item"
+    method: POST
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      vmware-api-session-id: "{{ session_id }}"
+    body_format: json
+    body:
+      create_spec:
+        name: "{{ cluster_name }}.iso"
+        type: "iso"
+        library_id: "{{ content_library_id }}"
+    status_code: 200
+    return_content: yes
+  register: content_library_item_id_res
+  vars:
+    content_library_id: "{{ content_library_id_res.json.value[0] }}"
+
+# - name: Save the ID of the content library item
+#   set_fact:
+#     content_library_item_id: "{{ content_library_item_id_res.json.value }}"
+
+- name: Create an update session for the new content library item
+  uri:
+    url: "https://{{ vcenter_hostname }}/rest/com/vmware/content/library/item/update-session"
+    method: POST
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      vmware-api-session-id: "{{ session_id }}"
+    body_format: json
+    body:
+      create_spec:
+        library_item_id: "{{ content_library_item_id }}"
+    status_code: 200
+    return_content: yes
+  register: update_session_id_res
+  vars:
+    content_library_item_id: "{{ content_library_item_id_res.json.value }}"
+
+# - name: Save the ID of the update session
+#   set_fact:
+#     update_session_id: "{{ update_session_id_res.json.value }}"
+
+- name: Create a file in the new update session
+  uri:
+    url: "https://{{ vcenter_hostname }}/rest/com/vmware/content/library/item/updatesession/file/id:{{ update_session_id }}?~action=add"
+    method: POST
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      vmware-api-session-id: "{{ session_id }}"
+    body_format: json
+    body:
+      file_spec:
+        name: "{{ cluster_name }}.iso"
+        source_type: PUSH
+    status_code: 200
+    return_content: yes
+  register: file_upload_endpoint_res
+  vars:
+    update_session_id: "{{ update_session_id_res.json.value }}"
+
+# - name: Save the upload entpoint of the file
+#   set_fact:
+#     file_upload_endpoint: "{{ file_upload_endpoint_res.json.value.upload_endpoint.uri }}"
+
+- name: Upload the ISO file
+  uri:
+    url: "{{ file_upload_endpoint_res.json.value.upload_endpoint.uri }}"
+    method: PUT
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      vmware-api-session-id: "{{ session_id }}"
+    src: "{{ cluster_dir }}{{filename_agent_iso}}"
+    remote_src: yes
+    status_code: 200
+
+- name: Confirm that file is uploaded
+  uri:
+    url: "https://{{ vcenter_hostname }}/rest/com/vmware/content/library/item/updatesession/file/id:{{ update_session_id }}?~action=get"
+    method: POST
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      vmware-api-session-id: "{{ session_id }}"
+    body_format: json
+    body:
+      file_name: "{{ cluster_name }}.iso"
+    status_code: 200
+    return_content: yes
+  register: file_status_res
+  until: "file_status_res.json.value.status=='READY'"
+  retries: 6
+  delay: 5
+  vars:
+    update_session_id: "{{ update_session_id_res.json.value }}"
+
+- name: Complete the update session
+  uri:
+    url: "https://{{ vcenter_hostname }}/rest/com/vmware/content/library/item/update-session/id:{{ update_session_id }}?~action=complete"
+    method: POST
+    validate_certs: false
+    force_basic_auth: yes
+    headers:
+      vmware-api-session-id: "{{ session_id }}"
+    status_code: 200
+  vars:
+    update_session_id: "{{ update_session_id_res.json.value }}"
+
+- name: Save the datastore of the content library
+  set_fact:
+    content_library_datastore: "esx-datengrab"
+  run_once: yes
+
+# - name: Save all ISO paths in the datastore of the content library
+#   set_fact:
+#     all_iso_paths_in_content_library_datastore: "{{ all_iso_paths_in_content_library_datastore|default({})|combine({hn:iso_path_in_cl_datastore}) }}"
+#   vars:
+#     content_library_id: "{{ content_library_id_res.json.value[0] }}"
+#     content_library_item_id: "{{ content_library_item_id_res.json.value }}"
+#     update_session_id: "{{ update_session_id_res.json.value }}"
+#     iso_path_in_cl_datastore: "contentlib-{{ content_library_id }}/{{ content_library_item_id }}/{{ hn }}-rhel-{{ ver }}-x86_64-boot_{{ update_session_id.split(':')[0] }}.iso"
+
+# - name: Save all content library item IDs
+#   set_fact:
+#     all_content_library_item_ids: "{{ all_content_library_item_ids|default({})|combine({hn:content_library_item_id}) }}"
+#   vars:
+#     content_library_item_id: "{{ content_library_item_id_res.json.value }}"
+
+
+
+# # ### END THE PLAYBOOK HERE
+- name: Stop the playbook here
+  ansible.builtin.meta: end_play
+# # ### END THE PLAYBOOK HERE
+
+
+
+
+
+
 # Erzeuge eine VM für SNO
 # !!!disk.EnableUUID=TRUE mit einbauen!!!
 
