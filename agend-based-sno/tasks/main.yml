@@ -278,12 +278,12 @@
     return_content: yes
   register: session_id_res
   # no_log: yes
-  run_once: yes
+  run_once: true
 
 - name: Save the session ID
   set_fact:
     session_id: "{{ session_id_res.json.value }}"
-  run_once: yes
+  run_once: true
 
 ## Get ID of the content library on the corresponding vmware server
 - name: Get ID of Content Library
@@ -454,7 +454,7 @@
 - name: Save the datastore of the content library
   set_fact:
     content_library_datastore: "esx-datengrab"
-  run_once: yes
+  run_once: true
 
 - name: Save all ISO paths in the datastore of the content library
   set_fact:

@@ -10,8 +10,10 @@ ENV REGISTRY_URL=artifactory.home.local \
     REGISTRY_URL_WITH_PORT=artifactory.home.local:443 \
     REGISTRY_USERNAME=admin \
     REGISTRY_PASSWORD='Test1234!' \
-    BASE_DIR=/opt/sva/downloads \
-    OPENSHIFT_VERSION=4.16.24
+    BASE_DIR=/opt/sva/downloads
+
+# OpenShift-Version kann auch über --build-args "OPENSHIFT_VERSION=4.12.40" beim Build verändert werden
+ARG OPENSHIFT_VERSION=4.16.24
 
 # The next Vars must be defined separatly because Containerfile cannot concatenate different vars in one ENV-Call
 ENV OPENSHIFT_INSTALLER_URL=https://${REGISTRY_URL}:443/artifactory/generic/pub/openshift-v4/x86_64/clients/ocp/${OPENSHIFT_VERSION}/openshift-install-linux-${OPENSHIFT_VERSION}.tar.gz \

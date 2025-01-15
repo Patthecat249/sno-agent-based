@@ -38,19 +38,46 @@ mkdir -p $MYPATH/git && cd $MYPATH/git && git clone https://github.com/Patthecat
 ```
 
 
-## Build the snohelper-Container with the Containerfile
+## Build the sno-airgap-installer-Container with the Containerfile
+You can build the sno-airgap-installer-Container for different OpenShift-Versions.
 
 ```bash
 # Run the podman build command
-podman build -t snohelper-rockylinux:9.3 -f $MYPATH/git/sno-agent-based/containerfile/Containerfile
+# Container for OpenShift 4.12.40
+OPENSHIFT_VERSION=4.12.40
+podman build -t patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} -f containerfile/Containerfile --build-arg OPENSHIFT_VERSION=${OPENSHIFT_VERSION}
+podman login patrick.artifactory.home.local -u admin -p 'Test1234!'
+podman push patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION}
+
+# Container for OpenShift 4.13.41
+OPENSHIFT_VERSION=4.13.41
+podman build -t patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} -f containerfile/Containerfile --build-arg OPENSHIFT_VERSION=${OPENSHIFT_VERSION}
+podman login patrick.artifactory.home.local -u admin -p 'Test1234!'
+podman push patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION}
+
+# Container for OpenShift 4.14.25
+OPENSHIFT_VERSION=4.14.25
+podman build -t patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} -f containerfile/Containerfile --build-arg OPENSHIFT_VERSION=${OPENSHIFT_VERSION}
+podman login patrick.artifactory.home.local -u admin -p 'Test1234!'
+podman push patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION}
+
+
+# Container for OpenShift 4.16.24
+OPENSHIFT_VERSION=4.16.24
+podman build -t patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} -f containerfile/Containerfile --build-arg OPENSHIFT_VERSION=${OPENSHIFT_VERSION}
+podman login patrick.artifactory.home.local -u admin -p 'Test1234!'
+podman push patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION}
+
 ```
 
 ```bash
 # The installationfiles will be stored under /opa/sva
 mkdir -p /opt/sva/credentials
-podman run --rm -it -v .:/workspace -v /opt/sva:/opt/sva --name snohelper localhost/snohelper-rockylinux:9.3 /bin/bash
+OPENSHIFT_VERSION=4.16.24
+podman run --rm --hostname sno-v${OPENSHIFT_VERSION} -it -v .:/workspace -v /opt/sva:/opt/sva --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:v4.12.40 /bin/bash
 # Falls SELinux aktiv ist, bitte folgenden Befehl verwenden
-podman run --rm -it -v .:/workspace:Z -v /opt/sva:/opt/sva:Z --name snohelper localhost/snohelper-rockylinux:9.3 /bin/bash
+OPENSHIFT_VERSION=4.16.24
+podman run --rm --hostname sno-v${OPENSHIFT_VERSION} -it -v .:/workspace:Z -v /opt/sva:/opt/sva:Z --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
 
 ```
 
@@ -101,16 +128,16 @@ ansible-playbook install-sno.yaml --vault-password-file /opt/sva/credentials/pas
 cd /workspace
 
 # SNO1
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno1" -e "ip_address=172.16.11.11" -e "mac_address=00:50:56:9c:49:8a" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno1" -e "ip_address=172.16.11.11" -e "mac_address=00:50:56:9c:49:8a" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.13.41"
 
 # SNO2
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno2" -e "ip_address=172.16.11.12" -e "mac_address=00:50:56:9c:49:8b" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno2" -e "ip_address=172.16.11.12" -e "mac_address=00:50:56:9c:49:8b" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.14.25"
 
 # SNO3
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno3" -e "ip_address=172.16.11.13" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno3" -e "ip_address=172.16.11.13" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.15.13"
 
 # SNO4
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.14" -e "mac_address=00:50:56:9c:49:8d" -e "network_name=openshift-12" -e "dns_server=172.16.11.10"
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sva/credentials/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.14" -e "mac_address=00:50:56:9c:49:8d" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.16.24"
 ```
 
 ### Überprüfen des Installationsstatus der SNO-Cluster

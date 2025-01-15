@@ -8,5 +8,5 @@
     - role: agend-based-sno
       vars:
         cluster_name: "sno1"  # Clustername, kann angepasst werden
-        ssh_public_key: "{{ lookup('file', '/opt/sva/ssh-keys/' + cluster_name + '/id_rsa_sno1.pub') }}"
+        ssh_public_key: "{{ lookup('file', '/opt/sva/ssh-keys/' + cluster_name + '/id_rsa_' + cluster_name + '.pub') }}"
         path_to_pull_secret: "/opt/sva/credentials/pull-secret"
