@@ -149,37 +149,37 @@
     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads"
     # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/openshift-install:{{ dir_base }}downloads/oc"
 
-# # Download -Zertifate vom vCenter
-# - name: "BASTION: Download vCenter-Root-Certificates to Bastion-Host"
-#   ansible.builtin.get_url:
-#     url: "https://{{ vcenter_hostname }}/certs/download.zip"
-#     dest: "{{ dir_downloads }}download.zip"
-#     mode: '0600'
-#     validate_certs: false
-#   register: download_result
+# Download -Zertifate vom vCenter
+- name: "BASTION: Download vCenter-Root-Certificates to Bastion-Host"
+  ansible.builtin.get_url:
+    url: "https://{{ vcenter_hostname }}/certs/download.zip"
+    dest: "{{ dir_downloads }}download.zip"
+    mode: '0600'
+    validate_certs: false
+  register: download_result
 
-# # Extract Root-Certificates
-# - name: "BASTION: Extract Root-Certificates to Bastion-Host certs-directory"
-#   ansible.builtin.unarchive:
-#     src: "{{ dir_downloads }}download.zip"
-#     dest: "{{ dir_certs }}"
-#     remote_src: true
-#   when: download_result is succeeded
+# Extract Root-Certificates
+- name: "BASTION: Extract Root-Certificates to Bastion-Host certs-directory"
+  ansible.builtin.unarchive:
+    src: "{{ dir_downloads }}download.zip"
+    dest: "{{ dir_certs }}"
+    remote_src: true
+  when: download_result is succeeded
 
-# # Copy root-cafile to truststore on Bastion-Host
-# - name: "BASTION: Copy all vcenter-rootca-certificate-files to the bastions truststore"
-#   ansible.builtin.copy:
-#     src: "{{ dir_entpackt }}"
-#     dest: "/etc/pki/ca-trust/source/anchors/"
-#     owner: root
-#     group: root
-#     mode: '0644'
-#     remote_src: true
+# Copy root-cafile to truststore on Bastion-Host
+- name: "BASTION: Copy all vcenter-rootca-certificate-files to the bastions truststore"
+  ansible.builtin.copy:
+    src: "{{ dir_entpackt }}"
+    dest: "/etc/pki/ca-trust/source/anchors/"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: true
 
-# # Refresh the truststore of the Bastion-Host
-# - name: "BASTION: Refresh Bastion-Host CA-Truststore"
-#   ansible.builtin.command: update-ca-trust
-#   changed_when: false
+# Refresh the truststore of the Bastion-Host
+- name: "BASTION: Refresh Bastion-Host CA-Truststore"
+  ansible.builtin.command: update-ca-trust
+  changed_when: false
 
 ### VMWARE
 # Löschen falls vorhanden
