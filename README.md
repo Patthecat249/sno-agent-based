@@ -69,7 +69,7 @@ podman login patrick.artifactory.home.local -u admin -p 'Test1234!'
 podman push patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION}
 
 ```
-
+## Start/run the Container
 ```bash
 # The installationfiles will be stored under /opa/sva
 mkdir -p /opt/sva/credentials
