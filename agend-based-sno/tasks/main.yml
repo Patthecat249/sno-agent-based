@@ -6,9 +6,9 @@
     path: "{{ item }}"
     state: absent
   loop:
-    - "{{ ssh_key_dir }}"
-    - "{{ cluster_dir }}"
-    - "{{ network_dir}}"
+    - "{{ dir_ssh_keys }}"
+    - "{{ dir_cluster }}"
+    - "{{ dir_network}}"
 
 # Remove ISO-File if exists, because of a new fresh installation
 - name: "CLEAN: Delete the iso-file"
@@ -22,19 +22,19 @@
     state: directory
     mode: '0644'
   loop:
-    - "{{ base_dir }}"
-    - "{{ base_dir }}ssh-keys"
-    - "{{ base_dir }}sno-clusters"
-    - "{{ base_dir }}downloads"
-    - "{{ base_dir }}certs"
-    - "{{ ssh_key_dir }}"
-    - "{{ cluster_dir }}"
-    - "{{ network_dir }}"
+    - "{{ dir_base }}"
+    - "{{ dir_base }}ssh-keys"
+    - "{{ dir_base }}sno-clusters"
+    - "{{ dir_base }}downloads"
+    - "{{ dir_base }}certs"
+    - "{{ dir_ssh_keys }}"
+    - "{{ dir_cluster }}"
+    - "{{ dir_network }}"
     - "/root/.cache/agent/image_cache/"
 
 - name: "ENVIRONMENT: Create SSH directory if it does not exist"
   ansible.builtin.file:
-    path: "{{ ssh_key_dir }}"
+    path: "{{ dir_ssh_keys }}"
     state: directory
     mode: '0755'
 
@@ -78,23 +78,23 @@
 
 - name: "SSH-KEYS: Generate SSH key if not exists"
   ansible.builtin.command:
-    cmd: "ssh-keygen -f {{ ssh_key_dir }}/id_rsa_{{ cluster_name }} -N ''"
+    cmd: "ssh-keygen -f {{ dir_ssh_keys }}/id_rsa_{{ cluster_name }} -N ''"
   args:
-    creates: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
+    creates: "{{ dir_ssh_keys }}/id_rsa_{{ cluster_name }}.pub"
 
 - name: "SSH-KEYS: Check if SSH public key exists on remote server"
   ansible.builtin.stat:
-    path: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
+    path: "{{ dir_ssh_keys }}/id_rsa_{{ cluster_name }}.pub"
   register: ssh_key_stat
 
 - name: "SSH-KEYS: Fail if SSH public key does not exist"
   ansible.builtin.fail:
-    msg: "The SSH public key {{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub was not found on the remote server."
+    msg: "The SSH public key {{ dir_ssh_keys }}/id_rsa_{{ cluster_name }}.pub was not found on the remote server."
   when: not ssh_key_stat.stat.exists
 
 - name: "SSH-KEYS: Read SSH public key from remote server"
   ansible.builtin.slurp:
-    src: "{{ ssh_key_dir }}/id_rsa_{{ cluster_name }}.pub"
+    src: "{{ dir_ssh_keys }}/id_rsa_{{ cluster_name }}.pub"
   register: ssh_key_content
   when: ssh_key_stat.stat.exists
 
@@ -107,36 +107,36 @@
 - name: "OPENSHIFT: Template install-config.yaml in cluster directory"
   ansible.builtin.template:
     src: install-config.yaml.j2
-    dest: "{{ cluster_dir }}/install-config.yaml"
+    dest: "{{ dir_cluster }}/install-config.yaml"
     mode: '0644'
 
 - name: "OPENSHIFT: Template agent-config.yaml in cluster directory"
   ansible.builtin.template:
     src: agent-config-with-network.yaml.j2
-    dest: "{{ cluster_dir }}/agent-config.yaml"
+    dest: "{{ dir_cluster }}/agent-config.yaml"
     mode: '0644'
 
 # Backup -install-config.yaml
 - name: "OPENSHIFT: Make a copy of install-config.yaml to shared directory (install-config-{{ cluster_name }}.yaml)"
   ansible.builtin.template:
     src: "install-config.yaml.j2"
-    dest: "{{ base_dir }}/sno-clusters/install-config-{{ cluster_name }}.yaml"
+    dest: "{{ dir_base }}/sno-clusters/install-config-{{ cluster_name }}.yaml"
     mode: '0644'
 
 - name: "OPENSHIFT: Make a copy of agent-config.yaml to shared directory (install-config-{{ cluster_name }}.yaml)"
   ansible.builtin.template:
     src: "agent-config-with-network.yaml.j2"
-    dest: "{{ base_dir }}/sno-clusters/agent-config-{{ cluster_name }}.yaml"
+    dest: "{{ dir_base }}/sno-clusters/agent-config-{{ cluster_name }}.yaml"
     mode: '0644'
 
 
 # Generate Zero-Touch-Provisioning YAML to cluster-dir
 # openshift-install agent create cluster-manifests --dir <installation_directory>
 - name: "OPENSHIFT-INSTALL: Create Cluster-Manifests-Directory for Zero-Touch-Provisioning"
-  ansible.builtin.shell: "/usr/local/bin/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create cluster-manifests"
+  ansible.builtin.shell: "/usr/local/bin/openshift-install --dir={{ dir_base }}sno-clusters/{{ cluster_name }} agent create cluster-manifests"
   environment:
-    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads"
-    # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/openshift-install:{{ base_dir }}downloads/oc"
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads"
+    # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/openshift-install:{{ dir_base }}downloads/oc"
 
 
 
@@ -144,10 +144,10 @@
 # INSERT ZTP Yaml-Files to customize the SNO-Installation
 
 - name: "OPENSHIFT-INSTALL: Create Agent-Based-ISO"
-  ansible.builtin.shell: "/usr/local/bin/openshift-install --dir={{ base_dir }}sno-clusters/{{ cluster_name }} agent create image"
+  ansible.builtin.shell: "/usr/local/bin/openshift-install --dir={{ dir_base }}sno-clusters/{{ cluster_name }} agent create image"
   environment:
-    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads"
-    # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/openshift-install:{{ base_dir }}downloads/oc"
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads"
+    # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/openshift-install:{{ dir_base }}downloads/oc"
 
 # # Download -Zertifate vom vCenter
 # - name: "BASTION: Download vCenter-Root-Certificates to Bastion-Host"
@@ -213,7 +213,7 @@
 #     user: "{{ esx_host_username }}"
 #     password: "{{ esx_host_password }}"
 #     # sno2/agent.x86_64.iso
-#     src: "{{ cluster_dir }}{{filename_agent_iso}}"
+#     src: "{{ dir_cluster }}{{filename_agent_iso}}"
 #     force_basic_auth: true
 #     status_code: 201
 #     remote_src: true
@@ -227,7 +227,7 @@
 #     GOVC_USERNAME: "{{ vcenter_username }}"
 #     GOVC_PASSWORD: "{{ vcenter_password }}"
 #     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
 #   register: iso_check
 #   changed_when: false
 
@@ -238,7 +238,7 @@
 #     GOVC_USERNAME: "{{ vcenter_username }}"
 #     GOVC_PASSWORD: "{{ vcenter_password }}"
 #     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
 #   # when: iso_check.stdout != "not_exists"
 #   when: "'/iso-library/sno1.iso' in iso_check.stdout"
 #   register: delete_result
@@ -251,13 +251,13 @@
 # # govc library.upload -library="${LIBRARY_NAME}" "${ISO_PATH}"
 # - name: "GOVC: Upload customized-sno ISO to VMware Content Library"
 #   # govc library.import -n="sno1.iso" /iso-library /opt/sva/sno-clusters/sno1/agent.x86_64.iso
-#   ansible.builtin.shell: "govc library.import -n={{ cluster_name }}.iso /{{ content_library_name }} {{ cluster_dir }}{{ filename_agent_iso }}"
+#   ansible.builtin.shell: "govc library.import -n={{ cluster_name }}.iso /{{ content_library_name }} {{ dir_cluster }}{{ filename_agent_iso }}"
 #   environment:
 #     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
 #     GOVC_USERNAME: "{{ vcenter_username }}"
 #     GOVC_PASSWORD: "{{ vcenter_password }}"
 #     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
 #   tags:
 #     - customattribut
 
@@ -415,7 +415,7 @@
     force_basic_auth: yes
     headers:
       vmware-api-session-id: "{{ session_id }}"
-    src: "{{ cluster_dir }}{{filename_agent_iso}}"
+    src: "{{ dir_cluster }}{{filename_agent_iso}}"
     remote_src: yes
     status_code: 200
 
@@ -532,7 +532,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "dc-home"
-    folder: /dc-home/vm/openshift/
+    folder: /{{ datacenter }}/vm/{{ vm_folder }}/
     name: "{{ cluster_name }}"
     state: powered-off
     guest_id: rhel9_64Guest
@@ -580,7 +580,7 @@
 #     GOVC_USERNAME: "{{ vcenter_username }}"
 #     GOVC_PASSWORD: "{{ vcenter_password }}"
 #     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
 #   tags:
 #     - customattribut
 
@@ -594,7 +594,7 @@
     GOVC_USERNAME: "{{ vcenter_username }}"
     GOVC_PASSWORD: "{{ vcenter_password }}"
     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ base_dir }}downloads/"
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
   tags:
     - customattribut
 

@@ -1,47 +1,33 @@
 # defaults file for agend-based-sno
 # Openshift
-openshift_version: "4.16.24"
-openshift_coreos: "4.16.3"
-openshift_major: "4.16"
-# openshift_base_url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
-openshift_base_url: "https://artifactory.home.local:443/artifactory/generic/pub/openshift-v4/x86_64/clients/ocp"
-# https://artifactory.home.local:443/artifactory/generic/pub/openshift-v4/x86_64/clients/ocp/4.16.24/openshift-client-linux-4.16.24.tar.gz
-openshift_installer_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-install-linux-{{ openshift_version }}.tar.gz"
-openshift_client_url: "{{ openshift_base_url }}/{{ openshift_version }}/openshift-client-linux-{{ openshift_version }}.tar.gz"
-base_domain: "home.local"
-cluster_name: "sno1"  # Der Default-Single-Node-OpenShift-Clustername
+openshift_version: ""
+openshift_coreos: ""
+openshift_major: ""
+base_domain: ""
+cluster_name: ""  # Der Default-Single-Node-OpenShift-Clustername
 
-# GOVC
-# https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz
-# govc_download_link: "https://github.com/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz"    # original
-govc_download_link: "https://artifactory.home.local:443/artifactory/generic/vmware/govmomi/releases/download/v0.46.0/govc_Linux_x86_64.tar.gz"
 
-# vcenter
-vcenter_hostname: "vcenter.home.local"
-esx_host_hostname: "10.0.249.11"
-datacenter: "dc-home"
-cluster: "cluster-home"
-datastore: "esx-datengrab"
-network_name: "pg-home"
-vm_name: "sno2-ansible"
-vm_folder: "openshift"  # Ordner, in dem die VM erstellt wird
-cpu_count: 8
-memory_mb: 32768
-disk_size_gb: 200
-# ISO
-# ignition_file: "{{ cluster_dir }}/bootstrap-in-place-for-live-iso.ign"
-ignition_file: "bootstrap-in-place-for-live-iso.ign"
-iso_file: "rhcos-live.iso"
-content_library_name: "iso-library"     # Just the name, without a slash
+# VMware
+vcenter_hostname: ""          # FQDN of your vcenter
+datacenter: ""                # Datacenter-Name in your vcenter
+cluster: ""                   # VMware-Cluster in your datacenter
+datastore: ""                 # VMware-Datastore, which is used for your SNO-VM
+network_name: ""              # VMware-Network, which is used for your SNO-VM
+vm_folder: ""                 # Ordner, in dem die VM erstellt wird
+cpu_count: ""                 # Count of your SNO-VM
+memory_mb: ""                 # Size of your SNO-VM-Memory in MB
+disk_size_gb: ""              # Disk-Size of your SNO-VM
+content_library_name: ""      # Name of your Content-Library within your vcenter - Just the name, without a slash
 
 # Working directories always end with slashes
-base_dir: "/opt/sva/"
-cluster_dir: "{{ base_dir }}sno-clusters/{{ cluster_name }}/"
-network_dir: "{{ base_dir }}network-configs/{{ cluster_name }}/"
-dir_downloads: "{{ base_dir }}downloads/"
-dir_certs: "{{ base_dir }}certs/"
+# The dir_base is the directory in your Container-Image, where the whole stuff lies. Git Playbook, credentials, certs, etc.
+dir_base: "/opt/sno/"
+dir_cluster: "{{ dir_base }}sno-clusters/{{ cluster_name }}/"
+dir_network: "{{ dir_base }}network-configs/{{ cluster_name }}/"
+dir_downloads: "{{ dir_base }}downloads/"
+dir_certs: "{{ dir_base }}certs/"
 dir_entpackt: "{{ dir_certs }}certs/lin/"
-ssh_key_dir: "{{ base_dir }}ssh-keys/{{ cluster_name }}/"
+dir_ssh_keys: "{{ dir_base }}ssh-keys/{{ cluster_name }}/"
 
 # files
 filename_agent_iso: "agent.x86_64.iso"
@@ -49,21 +35,20 @@ filename_agent_iso: "agent.x86_64.iso"
 # VM-Settings
 network_interface_name_of_vm: "ens192"
 mac_address: ""
-ip_address: "10.0.249.149"      # Beispiel IP-Adresse, kann variabel gesetzt werden
-ip_address_and_subnet: "172.16.11.4/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
+ip_address: "172.16.11.11"      # Beispiel IP-Adresse, kann variabel gesetzt werden
+ip_address_and_subnet: "172.16.11.11/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 cidr_and_subnet: "172.16.11.0/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 # ip_address_and_subnet: "10.0.249.149/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
 gateway: "172.16.11.1"              # Beispiel Gateway, kann variabel gesetzt werden
-# gateway: "10.0.249.1"              # Beispiel Gateway, kann variabel gesetzt werden
 dns_server: "10.0.249.53"
-# dns_server: "10.0.249.53"
-dns_servers:                       # Beispiel DNS-Server, kann variabel gesetzt werden
-  - "8.8.8.8"
-  - "8.8.4.4"
-
 arch: "x86_64"
 
 # Container-Image-Registry
+# This is the FQDN of your Container Image Registry
 container_image_registry_root: "artifactory.home.local"
+
+# This is the FQDN of your Container Image Registry, where your OpenShift-Images are mirrored to
 my_container_image_registry: "patrick.artifactory.home.local"
+
+# This is the complete URL of the rhcos_4.16.3-x86_64-live.x86_64.iso file in your local generic repository
 url_coreos_iso_in_artifactory: "https://{{ container_image_registry_root }}/artifactory/generic/pub/openshift-v4/x86_64/dependencies/rhcos/{{ openshift_major }}/{{ openshift_coreos }}/rhcos-{{ openshift_coreos }}-x86_64-live.x86_64.iso"
