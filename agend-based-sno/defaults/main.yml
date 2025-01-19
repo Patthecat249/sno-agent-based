@@ -21,7 +21,7 @@ content_library_name: ""      # Name of your Content-Library within your vcenter
 
 # Working directories always end with slashes
 # The dir_base is the directory in your Container-Image, where the whole stuff lies. Git Playbook, credentials, certs, etc.
-dir_base: "/opt/sno/"
+dir_base: "/opt/sno/pod-to-host-mount/"
 dir_cluster: "{{ dir_base }}sno-clusters/{{ cluster_name }}/"
 dir_network: "{{ dir_base }}network-configs/{{ cluster_name }}/"
 dir_downloads: "{{ dir_base }}downloads/"

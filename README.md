@@ -76,11 +76,11 @@ podman push patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_
 # The installationfiles will be stored under /opa/sno
 mkdir -p ./host-to-pod-mount
 OPENSHIFT_VERSION=4.16.19
-podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/sno/hostmount --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
+podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/sno/pod-to-host-mount --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
+
 # Falls SELinux aktiv ist, bitte folgenden Befehl verwenden
 OPENSHIFT_VERSION=4.16.19
-podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/sno/hostmount:Z --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
-
+podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/sno/pod-to-host-mount:Z --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
 ```
 
 ## Create a ansible-vault with your vcenter-credentials
@@ -91,8 +91,6 @@ This file is needed to connect to your vcenter. Remember your password. You will
 ansible-vault create /opt/sno/credentials/vcenter_credentials.yaml
 vcenter_username: "<vcenter-username>"
 vcenter_password: "<vcenter-password>"
-esx_host_username: "<esx_host-username>"
-esx_host_password: "<esx_host-password>"
 container_registry_username: "<container_registry_username>"
 container_registry_password: "<container_registry_password>"
 ```
@@ -139,7 +137,9 @@ ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /
 ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno3" -e "ip_address=172.16.11.13" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.15.13"
 
 # SNO4
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.14" -e "mac_address=00:50:56:9c:49:8d" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.16.24"
+cp ./pod-to-host-mount/* /opt/sno/credentials/
+cd git
+ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.14" -e "mac_address=00:50:56:9c:49:8d" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.16.19"
 ```
 
 ### Überprüfen des Installationsstatus der SNO-Cluster
