@@ -3,10 +3,55 @@
   gather_facts: false
   become: true
   vars_files:
-    - "/opt/sva/credentials/vcenter_credentials.yaml"
+    - "/opt/sno/credentials/vcenter_credentials.yaml"
   roles:
     - role: agend-based-sno
       vars:
         cluster_name: "sno1"  # Clustername, kann angepasst werden
-        ssh_public_key: "{{ lookup('file', '/opt/sva/ssh-keys/' + cluster_name + '/id_rsa_' + cluster_name + '.pub') }}"
-        path_to_pull_secret: "/opt/sva/credentials/pull-secret"
+        ssh_public_key: "{{ lookup('file', '/opt/sno/ssh-keys/' + cluster_name + '/id_rsa_' + cluster_name + '.pub') }}"
+        path_to_pull_secret: "/opt/sno/credentials/pull-secret"
+        # OpenShift
+        openshift_version: "4.16.19"
+        openshift_coreos: "4.16.3"
+        openshift_major: "4.16"
+        base_domain: "home.local"
+        # VMware
+        vcenter_hostname: "vcenter.home.local"
+        datacenter: "dc-home"
+        cluster: "cluster-home"
+        datastore: "esx-datengrab"
+        network_name: "pg-home"
+        vm_folder: "/{{ datacenter }}/vm/openshift"  # this is the full folder-name e.g. /dc-home/vm/openshift/sno-clusters
+        cpu_count: 8
+        memory_mb: 32768
+        disk_size_gb: 200
+        content_library_name: "iso-library"     # Just the name, without a slash
+        content_library_datastore: "esx-datengrab"
+        vm_guest_id: "rhel9_64Guest"
+        # Working directories always end with slashes
+        dir_base: "/opt/sno/"
+        dir_cluster: "{{ dir_base }}sno-clusters/{{ cluster_name }}/"
+        dir_network: "{{ dir_base }}network-configs/{{ cluster_name }}/"
+        dir_downloads: "{{ dir_base }}downloads/"
+        dir_certs: "{{ dir_base }}certs/"
+        dir_entpackt: "{{ dir_certs }}certs/lin/"
+        dir_ssh_keys: "{{ dir_base }}ssh-keys/{{ cluster_name }}/"
+        # files
+        filename_agent_iso: "agent.x86_64.iso"
+        # VM-Settings
+        network_interface_name_of_vm: "ens192"
+        mac_address: ""
+        ip_address: "172.16.11.11"      # Beispiel IP-Adresse, kann variabel gesetzt werden
+        ip_address_and_subnet: "172.16.11.11/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
+        cidr_and_subnet: "172.16.11.0/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
+        # ip_address_and_subnet: "10.0.249.149/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
+        gateway: "172.16.11.1"              # Beispiel Gateway, kann variabel gesetzt werden
+        dns_server: "10.0.249.53"
+        arch: "x86_64"
+        # Container-Image-Registry
+        # This is the FQDN of your Container Image Registry
+        container_image_registry_root: "artifactory.home.local"
+        # This is the FQDN of your Container Image Registry, where your OpenShift-Images are mirrored to
+        my_container_image_registry: "patrick.artifactory.home.local"
+        # This is the complete URL of the rhcos_4.16.3-x86_64-live.x86_64.iso file in your local generic repository
+        url_coreos_iso_in_artifactory: "https://{{ container_image_registry_root }}/artifactory/generic/pub/openshift-v4/x86_64/dependencies/rhcos/{{ openshift_major }}/{{ openshift_coreos }}/rhcos-{{ openshift_coreos }}-x86_64-live.x86_64.iso"

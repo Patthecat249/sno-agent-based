@@ -3,3 +3,4 @@ vcenter_credentials.yaml
 password.txt
 .vscode/settings.json
 sno-agent-based.code-workspace
+nmstate*
