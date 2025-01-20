@@ -63,7 +63,7 @@ RUN pip3 install pyvmomi requests ansible
 RUN ansible-galaxy collection install community.vmware
 
 # Clone Git Repository
-RUN git clone --branch complete-air-gap-standalone --single-branch https://github.com/Patthecat249/sno-agent-based.git ${DIR_GIT}
+RUN git clone --branch complete-air-gap --single-branch https://github.com/Patthecat249/sno-agent-based.git ${DIR_GIT}
 
 ### DOWNLOAD the Client-Software
 # Download the OpenShift installer
