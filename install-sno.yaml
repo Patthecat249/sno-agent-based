@@ -10,6 +10,7 @@
         cluster_name: "sno1"  # Clustername, kann angepasst werden
         ssh_public_key: "{{ lookup('file', '/opt/sno/ssh-keys/' + cluster_name + '/id_rsa_' + cluster_name + '.pub') }}"
         path_to_pull_secret: "/opt/sno/credentials/pull-secret"
+        path_to_ca_cert: "/opt/sno/credentials/root-ca.crt"
         # OpenShift
         openshift_version: "4.16.19"
         openshift_coreos: "4.16.3"
