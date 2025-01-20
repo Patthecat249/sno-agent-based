@@ -21,11 +21,13 @@
         cluster: "cluster-home"
         datastore: "esx-datengrab"
         network_name: "pg-home"
-        vm_folder: "openshift"  # Ordner, in dem die VM erstellt wird
+        vm_folder: "/{{ datacenter }}/vm/openshift"  # this is the full folder-name e.g. /dc-home/vm/openshift/sno-clusters
         cpu_count: 8
         memory_mb: 32768
         disk_size_gb: 200
         content_library_name: "iso-library"     # Just the name, without a slash
+        content_library_datastore: "esx-datengrab"
+        vm_guest_id: "rhel9_64Guest"
         # Working directories always end with slashes
         dir_base: "/opt/sno/"
         dir_cluster: "{{ dir_base }}sno-clusters/{{ cluster_name }}/"

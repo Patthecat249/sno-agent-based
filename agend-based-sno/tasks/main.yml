@@ -8,7 +8,7 @@
   loop:
     - "{{ dir_ssh_keys }}"
     - "{{ dir_cluster }}"
-    - "{{ dir_network}}"
+    - "{{ dir_network }}"
 
 # Remove ISO-File if exists, because of a new fresh installation
 - name: "CLEAN: Delete the iso-file"
@@ -37,44 +37,6 @@
     path: "{{ dir_ssh_keys }}"
     state: directory
     mode: '0755'
-
-# - name: Verify Nginx and Artifactory service availability
-#   uri:
-#     url: "https://{{ container_image_registry_root }}/ui/login/"
-#     method: GET
-#     return_content: no
-#     validate_certs: false
-#   register: artifactory_response
-#   failed_when: artifactory_response.status not in [200, 502, 503]
-
-# - name: Debug Artifactory service response
-#   debug:
-#     msg: "Artifactory is running. Status code: {{ artifactory_response.status }}"
-#   when: artifactory_response.status == 200
-
-# - name: Handle Bad Gateway (502) error
-#   fail:
-#     msg: 
-#       - "Artifactory returned 502 Bad Gateway."
-#       - "Bitte prüfe die NGINX-Konfiguration oder Artifactory-Verfügbarkeit."
-#       - "systemctl status nginx"
-#       - "systemctl status artifactory"
-#       - "Bitte vergiss nicht die beiden Dienste zu starten!"
-#   when: artifactory_response.status == 502
-
-# - name: Handle Service Unavailable (503) error
-#   fail:
-#     msg: 
-#       - "Artifactory returned 503 Service Unavailable."
-#       - "Bitte prüfe, ob dein Artifactory-Server läuft...!!!"
-#   when: artifactory_response.status == 503
-
-# - name: Fail if Artifactory is not running
-#   fail:
-#     msg: 
-#       - "Artifactory ist nicht erreichbar. Status code: {{ artifactory_response.status }}"
-#       - "Bitte prüfe, ob Nginx und Artifactory laufen"
-#   when: artifactory_response.status not in [200, 502, 503]
 
 - name: "SSH-KEYS: Generate SSH key if not exists"
   ansible.builtin.command:
@@ -110,19 +72,21 @@
     dest: "{{ dir_cluster }}/install-config.yaml"
     mode: '0644'
 
+# Template agent-config.yaml
 - name: "OPENSHIFT: Template agent-config.yaml in cluster directory"
   ansible.builtin.template:
     src: agent-config-with-network.yaml.j2
     dest: "{{ dir_cluster }}/agent-config.yaml"
     mode: '0644'
 
-# Backup -install-config.yaml
+# Backup install-config.yaml
 - name: "OPENSHIFT: Make a copy of install-config.yaml to shared directory (install-config-{{ cluster_name }}.yaml)"
   ansible.builtin.template:
     src: "install-config.yaml.j2"
     dest: "{{ dir_base }}/sno-clusters/install-config-{{ cluster_name }}.yaml"
     mode: '0644'
 
+# Backup agent-config.yaml
 - name: "OPENSHIFT: Make a copy of agent-config.yaml to shared directory (install-config-{{ cluster_name }}.yaml)"
   ansible.builtin.template:
     src: "agent-config-with-network.yaml.j2"
@@ -135,22 +99,21 @@
 - name: "OPENSHIFT-INSTALL: Create Cluster-Manifests-Directory for Zero-Touch-Provisioning"
   ansible.builtin.shell: "/usr/local/bin/openshift-install --dir={{ dir_base }}sno-clusters/{{ cluster_name }} agent create cluster-manifests"
   environment:
-    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads"
-    # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/openshift-install:{{ dir_base }}downloads/oc"
-
-
-
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
 
 # INSERT ZTP Yaml-Files to customize the SNO-Installation
+## HERE you can insert some cluster-configs, like ntp- or chronyd-configurations
 
+
+# Create the ISO-Image
 - name: "OPENSHIFT-INSTALL: Create Agent-Based-ISO"
   ansible.builtin.shell: "/usr/local/bin/openshift-install --dir={{ dir_base }}sno-clusters/{{ cluster_name }} agent create image"
   environment:
-    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads"
-    # PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/openshift-install:{{ dir_base }}downloads/oc"
+    PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
 
-# Download -Zertifate vom vCenter
-- name: "BASTION: Download vCenter-Root-Certificates to Bastion-Host"
+
+# Download Certificate from vCenter
+- name: "BASTION: Download vCenter-Root-Certificates to Pod"
   ansible.builtin.get_url:
     url: "https://{{ vcenter_hostname }}/certs/download.zip"
     dest: "{{ dir_downloads }}download.zip"
@@ -182,7 +145,7 @@
   changed_when: false
 
 ### VMWARE
-# Löschen falls vorhanden
+# Delete VM
 - name: "VMWARE: Delete an existing virtual machine, if exists"
   community.vmware.vmware_guest:
     hostname: "{{ vcenter_hostname }}"
@@ -192,78 +155,6 @@
     delete_from_inventory: true
     state: absent
     force: true
-  # delegate_to: localhost
-
-# # WICHTIG: Das ISO-File darf nicht mehr in einer VM gemounted sein!!!
-# - name: "VMWARE: Remove {{ cluster_name}}.iso on a datastore before uploading"
-#   community.vmware.vsphere_file:
-#     hostname: '{{ esx_host_hostname }}'
-#     username: '{{ esx_host_username }}'
-#     password: '{{ esx_host_password }}'
-#     datacenter: ha-datacenter
-#     datastore: local-ssd
-#     path: sno/{{ cluster_name }}.iso
-#     state: absent
-
-# # Upload to Datastore
-# - name: "VMWARE: Upload customized-sno ISO to VMware datastore via HTTPS"
-#   ansible.builtin.uri:
-#     url: "https://{{ esx_host_hostname }}/folder/sno/{{ cluster_name }}.iso?dcPath=ha-datacenter&dsName=local-ssd"
-#     method: PUT
-#     user: "{{ esx_host_username }}"
-#     password: "{{ esx_host_password }}"
-#     # sno2/agent.x86_64.iso
-#     src: "{{ dir_cluster }}{{filename_agent_iso}}"
-#     force_basic_auth: true
-#     status_code: 201
-#     remote_src: true
-
-# # Check if ISO exists in Content Library and then delete
-# - name: Check if the ISO file exists in the Content Library
-#   shell: |
-#     govc library.ls /iso-library/sno1.iso || echo "not_exists"
-#   environment:
-#     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
-#     GOVC_USERNAME: "{{ vcenter_username }}"
-#     GOVC_PASSWORD: "{{ vcenter_password }}"
-#     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
-#   register: iso_check
-#   changed_when: false
-
-# - name: Delete the ISO file if it exists
-#   shell: govc library.rm /iso-library/sno1.iso
-#   environment:
-#     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
-#     GOVC_USERNAME: "{{ vcenter_username }}"
-#     GOVC_PASSWORD: "{{ vcenter_password }}"
-#     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
-#   # when: iso_check.stdout != "not_exists"
-#   when: "'/iso-library/sno1.iso' in iso_check.stdout"
-#   register: delete_result
-
-
-
-
-
-# # Upload to Content Library
-# # govc library.upload -library="${LIBRARY_NAME}" "${ISO_PATH}"
-# - name: "GOVC: Upload customized-sno ISO to VMware Content Library"
-#   # govc library.import -n="sno1.iso" /iso-library /opt/sva/sno-clusters/sno1/agent.x86_64.iso
-#   ansible.builtin.shell: "govc library.import -n={{ cluster_name }}.iso /{{ content_library_name }} {{ dir_cluster }}{{ filename_agent_iso }}"
-#   environment:
-#     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
-#     GOVC_USERNAME: "{{ vcenter_username }}"
-#     GOVC_PASSWORD: "{{ vcenter_password }}"
-#     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
-#   tags:
-#     - customattribut
-
-
-
-
 
 ## Authorization for vmware Rest API
 - name: Create a session using username and password
@@ -297,15 +188,15 @@
     body_format: json
     body:
       spec:
-        name: "iso-library"
+        name: "{{ content_library }}"
         type: LOCAL
     status_code: 200
     return_content: yes
   register: content_library_id_res
 
-# - name: Save the ID of the corresponding content library
-#   set_fact:
-#     content_library_id: "{{ content_library_id_res.json.value[0] }}"
+- name: Save the ID of the corresponding content library
+  set_fact:
+    content_library_id: "{{ content_library_id_res.json.value[0] }}"
 
 - name: Get the ID of the old item with the same name
   uri:
@@ -358,9 +249,9 @@
   vars:
     content_library_id: "{{ content_library_id_res.json.value[0] }}"
 
-# - name: Save the ID of the content library item
-#   set_fact:
-#     content_library_item_id: "{{ content_library_item_id_res.json.value }}"
+- name: Save the ID of the content library item
+  set_fact:
+    content_library_item_id: "{{ content_library_item_id_res.json.value }}"
 
 - name: Create an update session for the new content library item
   uri:
@@ -380,9 +271,9 @@
   vars:
     content_library_item_id: "{{ content_library_item_id_res.json.value }}"
 
-# - name: Save the ID of the update session
-#   set_fact:
-#     update_session_id: "{{ update_session_id_res.json.value }}"
+- name: Save the ID of the update session
+  set_fact:
+    update_session_id: "{{ update_session_id_res.json.value }}"
 
 - name: Create a file in the new update session
   uri:
@@ -403,9 +294,9 @@
   vars:
     update_session_id: "{{ update_session_id_res.json.value }}"
 
-# - name: Save the upload entpoint of the file
-#   set_fact:
-#     file_upload_endpoint: "{{ file_upload_endpoint_res.json.value.upload_endpoint.uri }}"
+- name: Save the upload entpoint of the file
+  set_fact:
+    file_upload_endpoint: "{{ file_upload_endpoint_res.json.value.upload_endpoint.uri }}"
 
 - name: Upload the ISO file
   uri:
@@ -451,10 +342,10 @@
   vars:
     update_session_id: "{{ update_session_id_res.json.value }}"
 
-- name: Save the datastore of the content library
-  set_fact:
-    content_library_datastore: "esx-datengrab"
-  run_once: true
+# - name: Save the datastore of the content library
+#   set_fact:
+#     content_library_datastore: "{{ content_library_datastore }}"
+#   run_once: true
 
 - name: Save all ISO paths in the datastore of the content library
   set_fact:
@@ -471,76 +362,17 @@
   vars:
     content_library_item_id: "{{ content_library_item_id_res.json.value }}"
 
-
-
-
-
-
-
-
-
-
-# Erzeuge eine VM für SNO
-# !!!disk.EnableUUID=TRUE mit einbauen!!!
-
-## USING ISO-Datastore
-# - name: "VMWARE: Create the virtual machine for SNO"
-#   community.vmware.vmware_guest:
-#     hostname: "{{ vcenter_hostname }}"
-#     username: "{{ vcenter_username }}"
-#     password: "{{ vcenter_password }}"
-#     datacenter: "dc-home"
-#     folder: /dc-home/vm/openshift/
-#     name: "{{ cluster_name }}"
-#     state: powered-off
-#     guest_id: rhel9_64Guest
-#     # This is hostname of particular ESXi server on which user wants VM to be deployed
-#     # esxi_hostname: "{{ esxi_hostname }}"
-#     # customvalues:
-#     #   - key: disk.EnableUUID   # add the Advanced Configuration Parameter 
-#     #     value: TRUE
-#     disk:
-#     - size_gb: "{{ disk_size_gb }}"
-#       type: thin
-#       datastore: "{{ datastore }}"
-#     hardware:
-#       memory_mb: "{{ memory_mb }}"
-#       num_cpus: "{{ cpu_count }}"
-#     cdrom:
-#       - controller_type: sata
-#         controller_number: 0
-#         unit_number: 1
-#         state: present
-#         type: iso
-#         iso_path: "[local-ssd] sno/{{ cluster_name }}.iso"
-#     networks:
-#     - name: "{{ network_name }}"
-#       device_type: vmxnet3
-#       mac: "{{ mac_address }}"
-#     # wait_for_ip_address: true
-#     # wait_for_ip_address_timeout: 600
-#   # delegate_to: localhost
-#   register: deploy_vm
-#   # tags:
-#   #   - customattribut
-
-
 ## USING Content Library
 - name: "VMWARE: Create the virtual machine for SNO"
   community.vmware.vmware_guest:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    datacenter: "dc-home"
-    folder: /{{ datacenter }}/vm/{{ vm_folder }}/
+    datacenter: "{{ datacenter }}"
+    folder: "{{ vm_folder }}"
     name: "{{ cluster_name }}"
     state: powered-off
-    guest_id: rhel9_64Guest
-    # This is hostname of particular ESXi server on which user wants VM to be deployed
-    # esxi_hostname: "{{ esxi_hostname }}"
-    # customvalues:
-    #   - key: disk.EnableUUID   # add the Advanced Configuration Parameter 
-    #     value: TRUE
+    guest_id: "{{ vm_guest_id }}"
     disk:
     - size_gb: "{{ disk_size_gb }}"
       type: thin
@@ -554,12 +386,9 @@
         unit_number: 1
         state: present
         type: iso
-        # content_library: "{{ content_library_name }}"
-        # library_iso: "{{ cluster_name }}.iso"
-        # iso_path: "/{{ content_library_name }}/{{ cluster_name }}.iso"
         # iso_path: "[esx-datengrab] contentlib-caa1a910-0893-4e7d-8e11-80ea544cbed3/fef468a5-c07b-4f09-9fcb-c8399d07f7a3/agent.x86_64_2e0cbdb5-7c42-4765-8b41-78464ab56eb1.iso"
-        iso_path: "[esx-datengrab] {{ all_iso_paths_in_content_library_datastore[cluster_name|lower] }}"
         # iso_path: "[contentLib] /iso-library/sno1.iso"
+        iso_path: "[{{ content_library_datastore }}] {{ all_iso_paths_in_content_library_datastore[cluster_name|lower] }}"
     networks:
     - name: "{{ network_name }}"
       device_type: vmxnet3
@@ -568,22 +397,6 @@
     # wait_for_ip_address_timeout: 600
   # delegate_to: localhost
   register: deploy_vm
-  # tags:
-  #   - customattribut
-
-# INSERT ISO from Content Library
-# govc device.cdrom.insert -vm sno1 library:/iso-library/sno1.iso
-# - name: "GOVC: INSERT ISO from Content Library"
-#   ansible.builtin.shell: "govc device.cdrom.insert -vm {{ cluster_name }} library:/{{ content_library_name }}/{{ cluster_name }}.iso"
-#   environment:
-#     GOVC_URL: "https://{{ vcenter_hostname }}/sdk"
-#     GOVC_USERNAME: "{{ vcenter_username }}"
-#     GOVC_PASSWORD: "{{ vcenter_password }}"
-#     GOVC_INSECURE: "0"  # Setzt SSL-Zertifikatüberprüfung außer Kraft, falls du selbstsignierte Zertifikate verwendes
-#     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
-#   tags:
-#     - customattribut
-
 
 # Set advanced configuration parameters via GOVC
 # disk.EnableUUID=TRUE
@@ -626,7 +439,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "/{{ datacenter }}/vm/openshift"
+    folder: "{{ vm_folder }}"
     name: "{{ cluster_name }}"
     state: powered-on
 

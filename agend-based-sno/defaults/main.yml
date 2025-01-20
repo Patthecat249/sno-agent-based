@@ -1,11 +1,10 @@
 # defaults file for agend-based-sno
 # Openshift
-openshift_version: ""
-openshift_coreos: ""
-openshift_major: ""
-base_domain: ""
-cluster_name: ""  # Der Default-Single-Node-OpenShift-Clustername
-
+openshift_version: ""         # This is the whole openshift-version you want to install. e.g. 4.16.24
+openshift_coreos: ""          # This is the version of the coreos-image used by SNO. e.g. 4.16.3
+openshift_major: ""           # This is the major-version of your SNO. e.g. 4.16
+base_domain: ""               # This is dns-basis-domain of your SNO Cluster. e.g. home.local
+cluster_name: ""              # Der Default-Single-Node-OpenShift-Clustername
 
 # VMware
 vcenter_hostname: ""          # FQDN of your vcenter
@@ -18,6 +17,15 @@ cpu_count: ""                 # Count of your SNO-VM
 memory_mb: ""                 # Size of your SNO-VM-Memory in MB
 disk_size_gb: ""              # Disk-Size of your SNO-VM
 content_library_name: ""      # Name of your Content-Library within your vcenter - Just the name, without a slash
+
+# VM-Settings
+network_interface_name_of_vm: "ens192"    # Network Interface Name
+mac_address: ""                           # You need this Mac-Address in agent-config.yaml
+ip_address: "172.16.11.11"                # This is the IP address of your SNO-Cluster
+ip_address_and_subnet: "172.16.11.11/24"  # This is the IP address and the Subnet of your SNO-Cluster
+cidr_and_subnet: "172.16.11.0/24"         # This is the network-address and subnet
+gateway: "172.16.11.1"                    # This is the gateway of your SNO-Cluster
+dns_server: "10.0.249.53"                 # This dns-server-ip-address is used by your SNO-Cluster
 
 # Working directories always end with slashes
 # The dir_base is the directory in your Container-Image, where the whole stuff lies. Git Playbook, credentials, certs, etc.
@@ -32,16 +40,6 @@ dir_ssh_keys: "{{ dir_base }}ssh-keys/{{ cluster_name }}/"
 # files
 filename_agent_iso: "agent.x86_64.iso"
 
-# VM-Settings
-network_interface_name_of_vm: "ens192"
-mac_address: ""
-ip_address: "172.16.11.11"      # Beispiel IP-Adresse, kann variabel gesetzt werden
-ip_address_and_subnet: "172.16.11.11/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
-cidr_and_subnet: "172.16.11.0/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
-# ip_address_and_subnet: "10.0.249.149/24"      # Beispiel IP-Adresse, kann variabel gesetzt werden
-gateway: "172.16.11.1"              # Beispiel Gateway, kann variabel gesetzt werden
-dns_server: "10.0.249.53"
-arch: "x86_64"
 
 # Container-Image-Registry
 # This is the FQDN of your Container Image Registry
