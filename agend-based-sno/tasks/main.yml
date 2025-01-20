@@ -188,7 +188,7 @@
     body_format: json
     body:
       spec:
-        name: "{{ content_library }}"
+        name: "{{ content_library_name }}"
         type: LOCAL
     status_code: 200
     return_content: yes

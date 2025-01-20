@@ -81,6 +81,8 @@ podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/
 # Falls SELinux aktiv ist, bitte folgenden Befehl verwenden
 OPENSHIFT_VERSION=4.16.19
 podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/sno/pod-to-host-mount:Z --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
+
+podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/sno/pod-to-host-mount:Z --name sno-airgap-installer-standalone patrick.artifactory.home.local/sno/sno-airgap-installer-standalone:${OPENSHIFT_VERSION} /bin/bash
 ```
 
 ## Create a ansible-vault with your vcenter-credentials
