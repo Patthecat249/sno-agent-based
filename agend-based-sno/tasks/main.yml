@@ -65,6 +65,39 @@
     ssh_public_key: "{{ ssh_key_content.content | b64decode | trim }}"
   when: ssh_key_stat.stat.exists
 
+# Download Certificate from vCenter
+- name: "BASTION: Download vCenter-Root-Certificates to Pod"
+  ansible.builtin.get_url:
+    url: "https://{{ vcenter_hostname }}/certs/download.zip"
+    dest: "{{ dir_downloads }}download.zip"
+    mode: '0600'
+    validate_certs: false
+  register: download_result
+
+# Extract Root-Certificates
+- name: "BASTION: Extract Root-Certificates to Bastion-Host certs-directory"
+  ansible.builtin.unarchive:
+    src: "{{ dir_downloads }}download.zip"
+    dest: "{{ dir_certs }}"
+    remote_src: true
+  when: download_result is succeeded
+
+# Copy root-cafile to truststore on Bastion-Host
+- name: "BASTION: Copy all vcenter-rootca-certificate-files to the bastions truststore"
+  ansible.builtin.copy:
+    src: "{{ dir_entpackt }}"
+    dest: "/etc/pki/ca-trust/source/anchors/"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: true
+
+# Refresh the truststore of the Bastion-Host
+- name: "BASTION: Refresh Bastion-Host CA-Truststore"
+  ansible.builtin.command: update-ca-trust
+  changed_when: false
+
+
 # Create an empty VM to read the mac-address
 - name: "VMWARE: Create the virtual machine for SNO to get mac-address"
   community.vmware.vmware_guest:
@@ -152,38 +185,6 @@
   environment:
     PATH: "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{{ dir_base }}downloads/"
 
-
-# Download Certificate from vCenter
-- name: "BASTION: Download vCenter-Root-Certificates to Pod"
-  ansible.builtin.get_url:
-    url: "https://{{ vcenter_hostname }}/certs/download.zip"
-    dest: "{{ dir_downloads }}download.zip"
-    mode: '0600'
-    validate_certs: false
-  register: download_result
-
-# Extract Root-Certificates
-- name: "BASTION: Extract Root-Certificates to Bastion-Host certs-directory"
-  ansible.builtin.unarchive:
-    src: "{{ dir_downloads }}download.zip"
-    dest: "{{ dir_certs }}"
-    remote_src: true
-  when: download_result is succeeded
-
-# Copy root-cafile to truststore on Bastion-Host
-- name: "BASTION: Copy all vcenter-rootca-certificate-files to the bastions truststore"
-  ansible.builtin.copy:
-    src: "{{ dir_entpackt }}"
-    dest: "/etc/pki/ca-trust/source/anchors/"
-    owner: root
-    group: root
-    mode: '0644'
-    remote_src: true
-
-# Refresh the truststore of the Bastion-Host
-- name: "BASTION: Refresh Bastion-Host CA-Truststore"
-  ansible.builtin.command: update-ca-trust
-  changed_when: false
 
 ### VMWARE
 # Delete VM

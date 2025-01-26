@@ -71,18 +71,29 @@ podman push patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_
 ```
 
 ## Run the Container
+Before you run the container, make sure, that you have a folder where the installationfiles are placed on your bastion-Host
+I recommend: /opt/sno/pod-to-host-mount
 
 ```bash
-# The installationfiles will be stored under /opa/sno
-mkdir -p ./host-to-pod-mount
+# The installationfiles will be stored under /opt/sno/pod-to-host-mount
+# Here are the files store for each installation
+# You must create this folder on your Bastion host and place there some files
+# - pull-secret
+# - vcenter-credentials.yaml
+# - root-ca.crt
+# - password.txt
+
+mkdir -p /opt/sno/pod-to-host-mount
+
+
 OPENSHIFT_VERSION=4.16.19
-podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/sno/pod-to-host-mount --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
+podman run --rm --hostname sno-airgap-installer -it -v /opt/sno/pod-to-host-mount:/opt/sno/pod-to-host-mount --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
 
 # Falls SELinux aktiv ist, bitte folgenden Befehl verwenden
 OPENSHIFT_VERSION=4.16.19
-podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/sno/pod-to-host-mount:Z --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
+podman run --rm --hostname sno-airgap-installer -it -v /opt/sno/pod-to-host-mount:/opt/sno/pod-to-host-mount:Z --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
 
-podman run --rm --hostname sno-airgap-installer -it -v ./host-to-pod-mount:/opt/sno/pod-to-host-mount:Z --name sno-airgap-installer-standalone patrick.artifactory.home.local/sno/sno-airgap-installer-standalone:${OPENSHIFT_VERSION} /bin/bash
+podman run --rm --hostname sno-airgap-installer -it -v /opt/sno/pod-to-host-mount:/opt/sno/pod-to-host-mount:Z --name sno-airgap-installer-standalone patrick.artifactory.home.local/sno/sno-airgap-installer-standalone:${OPENSHIFT_VERSION} /bin/bash
 ```
 
 ## Create a ansible-vault with your vcenter-credentials
@@ -117,17 +128,17 @@ You can choose one of the parameters to prepare your install-config file.
 ### Install with Defaults from vars/main.yaml
 ```bash
 # ansible-playbook 01-playbook.yaml --ask-vault-pass
-cd /workspace
+cd /opt/sno/git
 ansible-playbook install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt
 
 ```
 ### Customize Clustername and IP-Address and MAC-Address
 ```bash
-cd /workspace
+cd /opt/sno/git
 ansible-playbook install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
 
 ### Im Container ausführen
-cd /workspace
+cd /opt/sno/git
 
 # SNO1
 ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno1" -e "ip_address=172.16.11.11" -e "mac_address=00:50:56:9c:49:8a" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.13.41"
