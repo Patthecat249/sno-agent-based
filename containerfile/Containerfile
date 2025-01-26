@@ -1,10 +1,9 @@
 
 
-# Basisimage
-# FROM rockylinux:9.3
+# Basisimage Red Hat Universal Base Image 9 latest
 FROM registry.access.redhat.com/ubi9/ubi:latest
 
-# Autor und Informationen
+# Author and Information
 LABEL maintainer="Patrick Jahn"
 LABEL description="Container mit den für SNO-Installation erforderlichen Paketen"
 
@@ -15,7 +14,7 @@ ENV DIR_GIT=/opt/sno/git/
 ENV DIR_DOWNLOADS=/opt/sno/downloads/
 ENV DIR_CREDENTIALS=/opt/sno/credentials/
 
-# OpenShift-Version kann auch über --build-args "OPENSHIFT_VERSION=4.12.40" beim Build verändert werden
+# OpenShift-Version kann auch über --build-args "OPENSHIFT_VERSION=4.16.19" beim Build verändert werden
 ARG OPENSHIFT_VERSION=4.16.24
 
 # OPENSHIFT-MIRROR-URLS for oc-client and openshift-install-client
@@ -29,17 +28,8 @@ ENV GOVC_DOWNLOAD_LINK=https://github.com/vmware/govmomi/releases/download/v0.47
 # NMSTATE Download Link
 ENV NMSTATE_DOWNLOAD_LINK=https://github.com/nmstate/nmstate/releases/download/v2.2.39/nmstatectl-linux-x64.zip
 
-# Set VMware variables
-# ARG VCENTER_HOSTNAME='vcenter.home.local'
-# ARG DIR_DOWNLOADS=/tmp/
-# ARG DIR_CERTS=/etc/vcenter_certs/
-
 # Create directories for downloads, git repo, hostmount and credentials
 RUN mkdir -p ${DIR_DOWNLOADS} ${DIR_GIT} ${DIR_HOSTMOUNT} ${DIR_CREDENTIALS}
-
-
-# # Add RootCA-Certificates in truststore
-# RUN openssl s_client -showcerts -servername ${REGISTRY_URL} -connect ${REGISTRY_URL}:443 </dev/null 2>/dev/null | awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/' > /etc/pki/ca-trust/source/anchors/registry-root-ca.crt
 
 # System aktualisieren und erforderliche Pakete installieren
 RUN dnf -y update && \
@@ -67,17 +57,16 @@ RUN git clone --branch complete-air-gap --single-branch https://github.com/Patth
 
 ### DOWNLOAD the Client-Software
 # Download the OpenShift installer
-RUN wget -q --user=${REGISTRY_USERNAME} --password=${REGISTRY_PASSWORD} ${OPENSHIFT_INSTALLER_URL} -O ${DIR_DOWNLOADS}/openshift-install-${OPENSHIFT_VERSION}.tar.gz
+RUN wget -q ${OPENSHIFT_INSTALLER_URL} -O ${DIR_DOWNLOADS}/openshift-install-${OPENSHIFT_VERSION}.tar.gz
 
 # Download the OpenShift client
-RUN wget -q --user=${REGISTRY_USERNAME} --password=${REGISTRY_PASSWORD} ${OPENSHIFT_CLIENT_URL} -O ${DIR_DOWNLOADS}/openshift-client-${OPENSHIFT_VERSION}.tar.gz
+RUN wget -q ${OPENSHIFT_CLIENT_URL} -O ${DIR_DOWNLOADS}/openshift-client-${OPENSHIFT_VERSION}.tar.gz
 
 # Download the GOVC tar.gz file
 RUN wget -q ${GOVC_DOWNLOAD_LINK} -O ${DIR_DOWNLOADS}/govc_Linux_x86_64.tar.gz
 
 # Download the NMSTATE tar.gz file
 RUN wget -q ${NMSTATE_DOWNLOAD_LINK} -O ${DIR_DOWNLOADS}nmstatectl-linux-x64.zip
-
 
 # Extract the OpenShift installer
 RUN tar -xvf ${DIR_DOWNLOADS}openshift-install-${OPENSHIFT_VERSION}.tar.gz -C ${DIR_DOWNLOADS} && \
@@ -101,13 +90,9 @@ RUN unzip ${DIR_DOWNLOADS}nmstatectl-linux-x64.zip -d ${DIR_DOWNLOADS} && ls -l 
 
 # Verify the oc-client and openshfit-install-client
 RUN /usr/local/bin/openshift-install version && \
-    /usr/local/bin/oc version
-
-# Verify govc version
-RUN govc version
-
-# Verify nmstatectl version
-RUN nmstatectl --version
+    /usr/local/bin/oc version && \
+    govc version && \
+    nmstatectl --version
 
 RUN rm -rf /opt/sno/downloads/ && dnf clean all
 

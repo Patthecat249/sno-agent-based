@@ -1,0 +1,58 @@
+# Basisimage Red Hat Universal Base Image 9 (spezifische Version)
+FROM registry.access.redhat.com/ubi9/ubi:9.2
+
+# Author and Information
+LABEL maintainer="Patrick Jahn"
+LABEL description="Container mit den für SNO-Installation erforderlichen Paketen"
+
+# Set environment variables
+ENV DIR_ROOT=/opt/sno/ \
+    DIR_HOSTMOUNT=/opt/sno/pod-to-host-mount/ \
+    DIR_GIT=/opt/sno/git/ \
+    DIR_DOWNLOADS=/opt/sno/downloads/ \
+    DIR_CREDENTIALS=/opt/sno/credentials/
+
+ARG OPENSHIFT_VERSION=4.16.24
+
+ENV OPENSHIFT_INSTALLER_URL=https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/${OPENSHIFT_VERSION}/openshift-install-linux-${OPENSHIFT_VERSION}.tar.gz \
+    OPENSHIFT_CLIENT_URL=https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/${OPENSHIFT_VERSION}/openshift-client-linux-${OPENSHIFT_VERSION}.tar.gz \
+    GOVC_DOWNLOAD_LINK=https://github.com/vmware/govmomi/releases/download/v0.47.1/govc_Linux_x86_64.tar.gz \
+    NMSTATE_DOWNLOAD_LINK=https://github.com/nmstate/nmstate/releases/download/v2.2.39/nmstatectl-linux-x64.zip
+
+# Erforderliche Verzeichnisse erstellen
+RUN mkdir -p ${DIR_DOWNLOADS} ${DIR_GIT} ${DIR_HOSTMOUNT} ${DIR_CREDENTIALS} && \
+    dnf -y update && \
+    dnf -y install tar git wget jq podman python3 python3-pip unzip bind-utils iproute iputils && \
+    dnf clean all
+
+# Python-Pakete und Ansible installieren
+RUN pip3 install --no-cache-dir pyvmomi requests ansible && \
+    ansible-galaxy collection install community.vmware
+
+# Git-Repository klonen
+RUN git clone --branch complete-air-gap --single-branch https://github.com/Patthecat249/sno-agent-based.git ${DIR_GIT}
+
+# # Software herunterladen und extrahieren
+RUN wget -q ${OPENSHIFT_INSTALLER_URL} -O ${DIR_DOWNLOADS}/openshift-install.tar.gz && \
+    wget -q ${OPENSHIFT_CLIENT_URL} -O ${DIR_DOWNLOADS}/openshift-client.tar.gz && \
+    wget -q ${GOVC_DOWNLOAD_LINK} -O ${DIR_DOWNLOADS}/govc.tar.gz && \
+    wget -q ${NMSTATE_DOWNLOAD_LINK} -O ${DIR_DOWNLOADS}/nmstatectl.zip && \
+    tar -xvf ${DIR_DOWNLOADS}/openshift-install.tar.gz -C /usr/local/bin && \
+    tar -xvf ${DIR_DOWNLOADS}/openshift-client.tar.gz -C /usr/local/bin && \
+    tar -xf ${DIR_DOWNLOADS}/govc.tar.gz -C /usr/local/bin && \
+    unzip -q ${DIR_DOWNLOADS}/nmstatectl.zip -d /usr/local/bin && \
+    chmod +x /usr/local/bin/openshift-install /usr/local/bin/oc /usr/local/bin/govc /usr/local/bin/nmstatectl && \
+    rm -rf ${DIR_DOWNLOADS}
+
+
+# Versionen überprüfen
+RUN openshift-install version && \
+    oc version && \
+    govc version && \
+    nmstatectl --version
+
+# Arbeitsverzeichnis festlegen
+WORKDIR /opt/sno
+
+# Standardbefehl
+CMD ["/bin/bash"]
