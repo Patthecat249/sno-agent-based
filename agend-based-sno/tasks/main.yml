@@ -65,6 +65,47 @@
     ssh_public_key: "{{ ssh_key_content.content | b64decode | trim }}"
   when: ssh_key_stat.stat.exists
 
+# Create an empty VM to read the mac-address
+- name: "VMWARE: Create the virtual machine for SNO to get mac-address"
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter }}"
+    folder: "{{ vm_folder }}"
+    name: "{{ cluster_name }}"
+    state: powered-off
+    guest_id: "{{ vm_guest_id }}"
+    disk:
+    - size_gb: "{{ disk_size_gb }}"
+      type: thin
+      datastore: "{{ datastore }}"
+    hardware:
+      memory_mb: "{{ memory_mb }}"
+      num_cpus: "{{ cpu_count }}"
+    # cdrom:
+    #   - controller_type: sata
+    #     controller_number: 0
+    #     unit_number: 1
+    #     state: present
+    #     type: iso
+    #     # iso_path: "[esx-datengrab] contentlib-caa1a910-0893-4e7d-8e11-80ea544cbed3/fef468a5-c07b-4f09-9fcb-c8399d07f7a3/agent.x86_64_2e0cbdb5-7c42-4765-8b41-78464ab56eb1.iso"
+    #     # iso_path: "[contentLib] /iso-library/sno1.iso"
+    #     iso_path: "[{{ content_library_datastore }}] {{ all_iso_paths_in_content_library_datastore[cluster_name|lower] }}"
+    networks:
+    - name: "{{ network_name }}"
+      device_type: vmxnet3
+      # mac: "{{ mac_address }}"
+    # wait_for_ip_address: true
+    # wait_for_ip_address_timeout: 600
+  # delegate_to: localhost
+  register: deploy_vm
+
+# Save the mac-address in a variable
+- name: Save mac-address in varibble
+  set_fact:
+    mac_address: "{{ deploy_vm.instance.hw_eth0.macaddress }}"
+
 # Template install-config.yaml
 - name: "OPENSHIFT: Template install-config.yaml in cluster directory"
   ansible.builtin.template:
