@@ -3,3 +3,5 @@ vcenter_credentials.yaml
 password.txt
 .vscode/settings.json
 sno-agent-based.code-workspace
+*.tar.gz
+nmstate
