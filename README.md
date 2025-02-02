@@ -218,3 +218,9 @@ fi
 echo "Datei $FILE_NAME erfolgreich zu Artifactory hochgeladen."
 
 ```
+
+
+## DevSpaces
+
+https://devspaces.apps.ipi.home.local#https://github.com/Patthecat249/sno-agent-based/tree/complete-air-gap
+https://devspaces.apps.ipi.home.local#https://github.com/Patthecat249/sno-agent-based/tree/main
