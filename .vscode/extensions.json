@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+      "adamhartford.vscode-base64-0.1.0",
+      "vscode.markdown-1.95.3",
+      "hashicorp.terraform-2.34.3@linux-x64"
+    ]
+}
+
+// https://open-vsx.org/api/adamhartford/vscode-base64/0.1.0/file/adamhartford.vscode-base64-0.1.0.vsix
+// https://open-vsx.org/api/vscode/markdown/1.95.3/file/vscode.markdown-1.95.3.vsix
+// https://open-vsx.org/api/hashicorp/terraform/linux-x64/2.34.3/file/hashicorp.terraform-2.34.3@linux-x64.vsix
