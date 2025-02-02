@@ -72,10 +72,10 @@ podman push patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_
 
 ## Run the Container
 Before you run the container, make sure, that you have a folder where the installationfiles are placed on your bastion-Host
-I recommend: /opt/sno/pod-to-host-mount
+I recommend: /opt/sno/sno-installations/
 
 ```bash
-# The installationfiles will be stored under /opt/sno/pod-to-host-mount
+# The installationfiles will be stored under /opt/sno/sno-installations/
 # Here are the files store for each installation
 # You must create this folder on your Bastion host and place there some files
 # - pull-secret
@@ -83,17 +83,17 @@ I recommend: /opt/sno/pod-to-host-mount
 # - root-ca.crt
 # - password.txt
 
-mkdir -p /opt/sno/pod-to-host-mount
+mkdir -p /opt/sno/sno-installations/
 
 
 OPENSHIFT_VERSION=4.16.19
-podman run --rm --hostname sno-airgap-installer -it -v /opt/sno/pod-to-host-mount:/opt/sno/pod-to-host-mount --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
+podman run --rm --hostname sno-airgap-installer -it -v /opt/sno/sno-installations/:/opt/sno/sno-installations/ --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
 
 # Falls SELinux aktiv ist, bitte folgenden Befehl verwenden
 OPENSHIFT_VERSION=4.16.19
-podman run --rm --hostname sno-airgap-installer -it -v /opt/sno/pod-to-host-mount:/opt/sno/pod-to-host-mount:Z --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
+podman run --rm --hostname sno-airgap-installer -it -v /opt/sno/sno-installations/:/opt/sno/sno-installations/:Z --name sno-airgap-installer patrick.artifactory.home.local/sno/sno-airgap-installer:${OPENSHIFT_VERSION} /bin/bash
 
-podman run --rm --hostname sno-airgap-installer -it -v /opt/sno/pod-to-host-mount:/opt/sno/pod-to-host-mount:Z --name sno-airgap-installer-standalone patrick.artifactory.home.local/sno/sno-airgap-installer-standalone:${OPENSHIFT_VERSION} /bin/bash
+podman run --rm --hostname sno-airgap-installer -it -v /opt/sno/sno-installations/:/opt/sno/sno-installations/:Z --name sno-airgap-installer-standalone patrick.artifactory.home.local/sno/sno-airgap-installer-standalone:${OPENSHIFT_VERSION} /bin/bash
 ```
 
 ## Create a ansible-vault with your vcenter-credentials
@@ -101,7 +101,7 @@ This file is needed to connect to your vcenter. Remember your password. You will
 ```bash
 
 # Create a vcenter credentials file
-ansible-vault create /opt/sno/credentials/vcenter_credentials.yaml
+ansible-vault create /opt/sno/sno-installations/credentials/vcenter_credentials.yaml
 vcenter_username: "<vcenter-username>"
 vcenter_password: "<vcenter-password>"
 container_registry_username: "<container_registry_username>"
@@ -112,14 +112,14 @@ container_registry_password: "<container_registry_password>"
 This file contains your Red Hat pull-secret. Please Download from and paste it into the file:
 <https://console.redhat.com/openshift/downloads>
 ```bash
-ansible-vault create /opt/sno/credentials/pull-secret
+ansible-vault create /opt/sno/sno-installations/credentials/pull-secret
 # Paste your Red Hat pull-secret here
 ```
 
 ## Create a password-file for your ansible-vault password
 This file contains your ansible-vault password to run the ansible-playbook without asking for vault-password
 ```bash
-echo "Test1234" > /opt/sno/pod-to-host-mount/password.txt
+echo "Test1234" > /opt/sno/sno-installations/password.txt
 ```
 
 ## Run this playbook to create your install-config.yaml for your OpenShift-Installation
@@ -128,31 +128,30 @@ You can choose one of the parameters to prepare your install-config file.
 ### Install with Defaults from vars/main.yaml
 ```bash
 # ansible-playbook 01-playbook.yaml --ask-vault-pass
-cd /opt/sno/git
-ansible-playbook install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt
+cd 
+ansible-playbook /opt/sno/git/install-sno.yaml --vault-password-file /opt/sno/sno-installations/password.txt
 
 ```
 ### Customize Clustername and IP-Address and MAC-Address
 ```bash
-cd /opt/sno/git
-ansible-playbook install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
+ansible-playbook /opt/sno/git/install-sno.yaml --vault-password-file /opt/sno/sno-installations/password.txt -e "cluster_name=sno3" -e "ip_address=10.0.249.55" -e "mac_address=00:50:56:9c:49:8b"
 
 ### Im Container ausführen
-cd /opt/sno/git
-
 # SNO1
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno1" -e "ip_address=172.16.11.11" -e "mac_address=00:50:56:9c:49:8a" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.13.41"
+ansible-playbook -i localhost, -c local /opt/sno/git/install-sno.yaml --vault-password-file /opt/sno/sno-installations/password.txt -e "cluster_name=sno1" -e "ip_address=172.16.11.11" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "dir_base=/opt/sno/sno-installations/"
+
+# Online-Variante SNO2
+ansible-playbook -i localhost, -c local /opt/sno/git/install-sno.yaml --vault-password-file /opt/sno/
+sno-installations/credentials/password.txt -e "cluster_name=sno2" -e "ip_address=10.0.249.54" -e "network_name=pg-home" -e "dns_server=10.0.249.53" -e "dir_base=/opt/sno/sno-installations/" -e "ip_address_and_subnet=10.0.249.54/24" -e "cidr_and_subnet=10.0.249.0/24" -e "gateway=10.0.249.1"
 
 # SNO2
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno2" -e "ip_address=172.16.11.12" -e "mac_address=00:50:56:9c:49:8b" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.14.25"
+ansible-playbook -i localhost, -c local /opt/sno/git/install-sno.yaml --vault-password-file /opt/sno/sno-installations/password.txt -e "cluster_name=sno2" -e "ip_address=172.16.11.12" -e "mac_address=00:50:56:9c:49:8b" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.14.25"
 
 # SNO3
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno3" -e "ip_address=172.16.11.13" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.15.13"
+ansible-playbook -i localhost, -c local /opt/sno/git/install-sno.yaml --vault-password-file /opt/sno/sno-installations/password.txt -e "cluster_name=sno3" -e "ip_address=172.16.11.13" -e "mac_address=00:50:56:9c:49:8c" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.15.13"
 
 # SNO4
-cp ./pod-to-host-mount/* /opt/sno/credentials/
-cd git
-ansible-playbook -i localhost, -c local install-sno.yaml --vault-password-file /opt/sno/pod-to-host-mount/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.14" -e "mac_address=00:50:56:9c:49:8d" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.16.19"
+ansible-playbook -i localhost, -c local /opt/sno/git/install-sno.yaml --vault-password-file /opt/sno/sno-installations/password.txt -e "cluster_name=sno4" -e "ip_address=172.16.11.14" -e "mac_address=00:50:56:9c:49:8d" -e "network_name=openshift-12" -e "dns_server=172.16.11.10" -e "openshift_version=4.16.19"
 ```
 
 ### Überprüfen des Installationsstatus der SNO-Cluster
