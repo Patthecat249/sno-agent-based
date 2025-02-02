@@ -4,6 +4,13 @@ metadata:
   namespace: che-kube-admin-devspaces-u27crr
 attributes:
   controller.devfile.io/storage-type: ephemeral
+projects:
+  - name: sno-agent-based
+    source:
+      type: git
+      location: https://github.com/Patthecat249/sno-agent-based.git
+      checkoutFrom:
+        revision: complete-air-gap
 components:
   - name: universal-developer-image
     container:
@@ -11,11 +18,6 @@ components:
       mountSources: true
       memoryRequest: 512Mi
       cpuRequest: 500m
-  - name: source
-    git:
-      checkoutFrom:
-        revision: complete-air-gap
-      repository: https://github.com/Patthecat249/sno-agent-based.git
 commands:
   - id: build
     exec:
